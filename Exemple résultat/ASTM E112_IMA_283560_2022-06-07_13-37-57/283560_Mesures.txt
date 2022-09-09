@@ -1,0 +1,109 @@
+
+
+[General]
+Application=METALIA Version 5.7d
+Date=2022/06/07 13:36:46
+Module=Norme ASTM E112
+DefinitionEncadrementObjets=MBR
+NbEchantillons=1
+NbZones=1
+Operateur=C. Camus
+FichierResultats=D:\Sessions Metalia\C Camus\ASTM E112_IMA_283560_2022-06-07_13-37-57\283560_Resultats.txt
+FormatImages=tif
+
+
+[Echantillon1]
+Repere=283560
+Coulee=
+Nuance=
+Origine=
+Produit=
+AttaqueChimique=
+Commentaire=
+RCoulee=Coulée;Heat;Heat
+Coulée=
+RNuance=Nuance;Grade;Grade
+RProduit=Produit;Product;Product
+ROrigine=Origine;Origin;Origin
+Point1=32292.2;-17743.4
+Point2=8268.6;-17743.4
+Point3=8268.6;-2485
+Point4=31356.4;-2485
+Point1Repos=31356.4;-17743.4
+Point2Repos=8268.6;-17743.4
+Point3Repos=8268.6;-2485
+Point4Repos=31356.4;-2485
+Longueur=23087.8
+Hauteur=15258.4
+Surface=352282887.52
+Angle_X=0
+
+
+[Methode]
+GeometrieEchantillon=rectangle
+GeometrieZone=rectangle
+GeometrieSens=0
+GeometrieLaminage=X
+CameraPilote=4UEye UI328xCP-C 4103619369
+CameraConfiguration=0
+CameraNomConfiguration=1024x1024 N&B
+MicroscopeTailleImage=1024 x 1024
+MicroscopeFiltre=Sans filtre
+MicroscopeFichierCalibration=CalibrationsUEYE_1.ini
+MicroscopeGrossissement=100
+MicroscopeProjectif=1
+MicroscopeObjectif=10
+MicroscopeTaillePixel=0.34500
+MicroscopeTaillePixelX=0.34500
+MicroscopeTaillePixelY=0.34500
+UniteMesure=µm
+TaillePixel=0.345
+MicroscopeSurfaceImage=124806.75840
+MiseAuPointType=Triangulation
+MiseAuPointNbPoints=5
+MiseAuPointLimiteEcartMoyen=10
+MiseAuPointLimiteEcartMaximal=30
+MethodeMesure=ImageType
+SauvegardeImages=oui
+Planche=Plate I
+TailleImages=340x340
+TailleChampMaximale=oui
+DistinctionPopulations=non
+CorrectionSurface=non
+
+
+[Zone1_1]
+Maximale=1
+Retrait=1000
+Centree=0
+CentreeSurface=0
+L1=21088
+L2=13258
+D1=1000
+D2=1000
+Balayage_Type=Aleatoire sans recouvrement
+Balayage_SansPositionBloquee=oui
+Balayage_Retrait=0
+Balayage_EspacementX=0
+Balayage_EspacementY=0
+Balayage_NbChamps=-1
+Balayage_Duree=0
+Balayage_NbObjets=0
+TriangulationX1=30180.2
+TriangulationY1=-16566.4
+TriangulationZ1=-11983.981
+TriangulationX2=9444.6
+TriangulationY2=-16566.4
+TriangulationZ2=-12057.601
+TriangulationX3=9444.4
+TriangulationY3=-3661.4
+TriangulationZ3=-12247.621
+TriangulationX4=30179.8
+TriangulationY4=-3661.4
+TriangulationZ4=-12167.921
+TriangulationX5=19812.4
+TriangulationY5=-10114.2
+TriangulationZ5=-12117.001
+TriangulationEcartMoyen=1.65213207620836
+TriangulationEcartMax=2.17992097307615
+NbChampsTraites=10

@@ -1,0 +1,2 @@
+Repere;Coulée;Nuance;Produit;Zone;Attaque chimique;Operateur;Date;Methode;Type_Meth;Grossissement;Unite;Taille_Ima;Taille_Ima (px);Taille_Pixel;L1;L2;D1;D2;R1;R2;Taille_Cible;Nb_Cible;Repartition;CV;CV;CV;Nb_Images;V1;V5;Surface_Ana;Phase;Fraction_Moy;Fraction_Min;Fraction_Max;Fraction_EcTy;%_Cible_Ent;%_Demi_Cible;Session
+296574;;;;1;;C. Camus;2022/06/08 10:39:38;Seuillage;SA;100;µm;353.28;1024;0.345;24315;2381;500;500;;;;;;;;;10;0.060;0.602;1.25;FERRITE;52.5;48.7;57.4;2.9;;;Fraction Phase_SEU_296574_2022-06-08_10-38-21

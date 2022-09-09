@@ -1,0 +1,109 @@
+
+
+[General]
+Application=METALIA Version 5.7d
+Date=2022/06/07 14:49:24
+Module=Acquisition d'image
+DefinitionEncadrementObjets=MBR
+NbEchantillons=1
+NbZones=1
+Operateur=C. Camus
+FichierResultats=D:\Sessions Metalia\C Camus\AcquisitionImages_290470.11_2022-06-07_14-50-42\290470.11_Resultats.txt
+FormatImages=tif
+
+
+[Echantillon1]
+Repere=290470.11
+Coulee=
+Nuance=
+Origine=
+Produit=
+AttaqueChimique=
+Commentaire=
+RCoulee=Coulée;Heat;Heat
+Coulée=
+RNuance=Nuance;Grade;Grade
+RProduit=Produit;Product;Product
+ROrigine=Origine;Origin;Origin
+Point1=38972;-9938.8
+Point2=13406.8;-9938.8
+Point3=13406.8;-5798
+Point4=38943;-5798
+Point1Repos=38943;-9938.8
+Point2Repos=13406.8;-9938.8
+Point3Repos=13406.8;-5798
+Point4Repos=38943;-5798
+Longueur=25536.2
+Hauteur=4140.8
+Surface=105740296.96
+Angle_X=0
+
+
+[Methode]
+GeometrieEchantillon=rectangle
+GeometrieZone=rectangle
+GeometrieSens=0
+GeometrieLaminage=X
+CameraPilote=4UEye UI328xCP-C 4103619369
+CameraConfiguration=0
+CameraNomConfiguration=1024x1024 N&B
+MicroscopeTailleImage=1024 x 1024
+MicroscopeFiltre=Sans filtre
+MicroscopeFichierCalibration=CalibrationsUEYE_1.ini
+MicroscopeGrossissement=100
+MicroscopeProjectif=1
+MicroscopeObjectif=10
+MicroscopeTaillePixel=0.34500
+MicroscopeTaillePixelX=0.34500
+MicroscopeTaillePixelY=0.34500
+UniteMesure=µm
+TaillePixel=0.345
+MicroscopeSurfaceImage=124806.75840
+MiseAuPointType=Triangulation
+MiseAuPointNbPoints=5
+MiseAuPointLimiteEcartMoyen=10
+MiseAuPointLimiteEcartMaximal=30
+FormatImages=tif
+AcquisitionEchelle=oui
+AcquisitionAutomatique=non
+AcquisitionFichierParametres=
+
+
+[Zone1_1]
+Maximale=1
+Retrait=1000
+Centree=0
+CentreeSurface=0
+L1=23536
+L2=2141
+D1=1000
+D2=1000
+Balayage_Type=Aleatoire sans recouvrement
+Balayage_SansPositionBloquee=oui
+Balayage_Retrait=0
+Balayage_EspacementX=0
+Balayage_EspacementY=0
+Balayage_NbChamps=-1
+Balayage_Duree=0
+Balayage_NbObjets=0
+TriangulationX1=37766
+TriangulationY1=-8762.4
+TriangulationZ1=-10531.74
+TriangulationX2=14583.2
+TriangulationY2=-8762.2
+TriangulationZ2=-10158.16
+TriangulationX3=14583.2
+TriangulationY3=-6975
+TriangulationZ3=-10124.98
+TriangulationX4=37766.6
+TriangulationY4=-6975
+TriangulationZ4=-10506.07
+TriangulationX5=26175
+TriangulationY5=-7868.4
+TriangulationZ5=-10333.78
+TriangulationEcartMoyen=2.06751306530386
+TriangulationEcartMax=2.83403790895682
+ToutesImages=non
+NombreImages=3
+NombreImagesMax=469
+NbChampsTraites=3
