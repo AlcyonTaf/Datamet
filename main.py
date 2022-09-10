@@ -33,28 +33,41 @@ from tkinter.messagebox import showinfo, showerror, askyesno
 # Utilitaire fichier/dossier
 import os
 # Trouver tous les fichiers d'un dossier
-#import glob
+# import glob
 # Manipulation de données
-#import pandas as pd
+# import pandas as pd
 # Lecture fichier config
 from configparser import ConfigParser
 
-class FolderTree(tk.Frame):
-    def __init__(self, parent, master, folderpath, *args, **kwargs):
+
+class Details(tk.Frame):
+    def __init__(self, parent, master, *args, **kwargs):
         tk.Frame.__init__(self, parent, *args, **kwargs)
 
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
-        #self.grid_rowconfigure(1, weight=1)
-        #self.grid_columnconfigure(1, weight=1)
 
+        self.text = Text(self)
+        self.text.grid(row=0, column=0, sticky='news')
+
+
+class FolderTree(tk.Frame):
+    def __init__(self, parent, master, folderpath, *args, **kwargs):
+        tk.Frame.__init__(self, parent, *args, **kwargs)
+        self.parent = parent
+
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        # self.grid_rowconfigure(1, weight=1)
+        # self.grid_columnconfigure(1, weight=1)
 
         self.nodes = dict()
-        self.tree = ttk.Treeview(self)
+        self.tree = ttk.Treeview(self, columns='folder_list', show='headings')
         ysb = ttk.Scrollbar(self, orient='vertical', command=self.tree.yview)
         xsb = ttk.Scrollbar(self, orient='horizontal', command=self.tree.xview)
         self.tree.configure(yscroll=ysb.set, xscroll=xsb.set)
-        self.tree.heading('#0', text='Project tree', anchor='w')
+        self.tree.column('folder_list', stretch=True, width=300)
+        self.tree.heading('folder_list', text='Liste dossier')
 
         self.tree.grid(row=0, column=0, sticky="nsew")
         ysb.grid(row=0, column=1, sticky='ns')
@@ -62,22 +75,10 @@ class FolderTree(tk.Frame):
         self.grid()
 
         abspath = os.path.abspath(folderpath)
-        self.insert_node('', abspath, abspath)
-        self.tree.bind('<<TreeviewOpen>>', self.open_node)
-
-    def insert_node(self, parent, text, abspath):
-        node = self.tree.insert(parent, 'end', text=text, open=False)
-        if os.path.isdir(abspath):
-            self.nodes[node] = abspath
-            self.tree.insert(node, 'end')
-
-    def open_node(self, event):
-        node = self.tree.focus()
-        abspath = self.nodes.pop(node, None)
         if abspath:
-            self.tree.delete(self.tree.get_children(node))
             for p in os.listdir(abspath):
-                self.insert_node(node, p, os.path.join(abspath, p))
+                self.tree.insert('', 'end', values=(p,))
+
 
 class MainApplication(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
@@ -86,11 +87,17 @@ class MainApplication(tk.Frame):
 
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
 
-        path = os.path.abspath(
-            "C:\\Users\\CRMC\\PycharmProjects\\Datamet\\Exemple résultat")
+        # Treeview des dossiers
+        #path = os.path.abspath("C:\\Users\\CRMC\\PycharmProjects\\Datamet\\Exemple résultat")
+        path = os.path.abspath("E:\\Romain\\Documents\\Romain bidouille\\Informatique\\Taf\\Datamet\\Exemple résultat")
         self.foldertree = FolderTree(self, parent, path)
         self.foldertree.grid(row=0, column=0, sticky='news')
+
+        # Partie Détails des dossier
+        self.details = Details(self, parent)
+        self.details.grid(row=0, column=1, sticky='news')
 
         # self.test_result_list = TestResultList(self)
         # self.test_result_list.grid(row=0, column=1, sticky='news')
@@ -107,10 +114,9 @@ class MenuMain(tk.Menu):
         self.file_menu = tk.Menu(self, tearoff=False)
         self.add_cascade(label="Fichier", underline=0, menu=self.file_menu)
         # self.file_menu.add_command(label="Transmettre les résultats vers SAP", underline=1,
-                                   # command=self.parent.run_ps_popup_window)
+        # command=self.parent.run_ps_popup_window)
         # self.file_menu.add_command(label="Archivage", underline=2, command=self.parent.archive_popup_window)
         self.file_menu.add_command(label="Exit", underline=3, command=self.quit)
-
 
 
 class App(tk.Tk):
@@ -124,9 +130,9 @@ class App(tk.Tk):
         self.config(menu=self.menubar)
 
         self.title("Gestion de l'export dans SAP des résultats du logiciel DATAMET")
-        self.geometry('640x480')
-        self.maxsize(800, 600)
-        self.minsize(300, 400)
+        #self.geometry('640x480')
+        # self.maxsize(1280, 600)
+        # self.minsize(300, 400)
 
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
@@ -137,9 +143,7 @@ class App(tk.Tk):
         # OtherFrame(self).pack(side="bottom")
 
         # Shutdown watchdog
-        #self.bind("<Destroy>", self.main_application.test_result_list.shutdown_watchdog)
-
-
+        # self.bind("<Destroy>", self.main_application.test_result_list.shutdown_watchdog)
 
     # afficher les erreurs
     # Todo : a reactiver
@@ -148,16 +152,16 @@ class App(tk.Tk):
 
 
 if __name__ == '__main__':
-    #Interface Graphique
+    # Interface Graphique
     app = App()
     app.mainloop()
 
     # test lecture fichier mesures
-    path = os.path.abspath(
-        "C:\\Users\\CRMC\\PycharmProjects\\Datamet\\Exemple résultat\\ISO 643_INT_277171_2022-06-07_10-59-04\\277171_Mesures.txt")
-
-    Mesures = ConfigParser()
-    Mesures.read(path)
-    print(Mesures.get('General', 'Module'))
+    # path = os.path.abspath(
+    #     "C:\\Users\\CRMC\\PycharmProjects\\Datamet\\Exemple résultat\\ISO 643_INT_277171_2022-06-07_10-59-04\\277171_Mesures.txt")
+    #
+    # Mesures = ConfigParser()
+    # Mesures.read(path)
+    # print(Mesures.get('General', 'Module'))
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
