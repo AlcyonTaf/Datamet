@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
-
-#Manipulation de xml
+import os
+# Manipulation de xml
 from lxml import etree as et
+# Fichier de configuration
+from configparser import ConfigParser
 
 
 
@@ -19,9 +21,40 @@ class SapXml(object):
     """
 
     def __int__(self):
-        self.xmltemplatefolder = ""
+        self.config = ConfigParser()
+        self.xml_encoding = 'ISO-8859-1'
+        # On créer le nom du fichier xml et on définit ou l'enregistrer
+        # Todo : Rajouter timestamp a la fin du fichier (voir fichier résultats traction pdf du scipt PS)
+        # self.xml_name = "\IC_PL_ESS_RES_" + essais_id[1] + "_" + essais_id[2] + "_" + essais_id[3] + "_" + essais_id[
+        #     4] + "_" + \
+        #            essais_id[5] + ".xml"
+        self.xml_path_folder_to_save = self.config.get('xmlSAP', 'SaveXMLToSAPFolder')
+        self.xml_template_folder = self.config.get('xmlSAP', 'XMLTemplateFolder')
 
+        self.path_to_xml_essais = os.path.join(self.xml_template_folder, 'xml_template_essais.xml')
+        self.path_to_xml_eprouvette = os.path.join(self.xml_template_folder, 'xml_template_eprouvette.xml')
+        self.path_to_xml_parametre = os.path.join(self.xml_template_folder, 'xml_template_parametre.xml')
+        # import des templates
+        # Essais
+        self.root_essais = et.parse(self.path_to_xml_essais).getroot()
+        # Eprouvette
+        self.root_eprouvette = et.parse(self.path_to_xml_eprouvette).getroot()
+        # Parametre
+        self.root_parametre = et.parse(self.path_to_xml_parametre).getroot()
 
+    def xml_result_to_sap(self):
+        """
+        fonction qui va générer le xml pour sap dans le cas de résultats
+        :return:
+        """
+        print('result_to_sap fonction')
+
+    def xml_tiff_to_sap(self):
+        """
+        fonction qui va générer le xml pour sap dans le cas d'annexe
+        :return:
+        """
+        print('xml_tiff_to_sap fonction')
 
 # Copie de la fonction pour générer les XML de tractionPDF
 # le but est d'en faire une class qui sera réutilisable dans d'autre projet
@@ -81,3 +114,7 @@ def xml_pdf_to_tiff(essais_id, pdf_name):
 
     et.indent(root_essais)
     et.ElementTree(root_essais).write(xml_path_to_save, pretty_print=True, encoding=xml_encoding)
+
+
+if __name__ == '__main__':
+    print('sapxml.py')
