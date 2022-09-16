@@ -6,7 +6,6 @@ from lxml import etree as et
 from configparser import ConfigParser
 
 
-
 class SapXml(object):
     """
     Class pour la création d'un xml de résultat et/ou d'annexe qui sera ensuite importé dans SAP
@@ -55,6 +54,7 @@ class SapXml(object):
         :return:
         """
         print('xml_tiff_to_sap fonction')
+
 
 # Copie de la fonction pour générer les XML de tractionPDF
 # le but est d'en faire une class qui sera réutilisable dans d'autre projet
@@ -118,3 +118,21 @@ def xml_pdf_to_tiff(essais_id, pdf_name):
 
 if __name__ == '__main__':
     print('sapxml.py')
+
+    testresultat = {"Essais": [{"ID ESSAI": "Valeur ID ESSAIS List",
+                                "Eprouvettes": [{"ID EPROUVETTE": "Valeur ID Eprouvette",
+                                                "Parametres": [{"ParaSAP": "Valeur PAra SAP",
+                                                                "Resultat para SAP": "Valeur résultat para sap"}]}]}]}
+
+    # print(type(testresultat))
+    # print(testresultat)
+    # print(testresultat["Essais"])
+    # print(type(testresultat["Essais"]))
+
+    for essai in testresultat["Essais"]:
+        print(essai)
+        # récupération de l'i de l'essai
+        print("Liste des valeurs Id essai : " +essai["ID ESSAI"])
+        # récupération des Eprouvette de l'essai :
+        for eprouvette in essai['Eprouvettes']:
+            print(eprouvette)

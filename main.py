@@ -90,8 +90,8 @@ class MainApplication(tk.Frame):
         self.grid_columnconfigure(1, weight=1)
 
         # Treeview des dossiers
-        #path = os.path.abspath("C:\\Users\\CRMC\\PycharmProjects\\Datamet\\Exemple résultat")
-        path = os.path.abspath("E:\\Romain\\Documents\\Romain bidouille\\Informatique\\Taf\\Datamet\\Exemple résultat")
+        path = os.path.abspath("C:\\Nobackup\\Dev Informatique\\GitHub Clone\\Datamet\Exemple résultat")
+        # path = os.path.abspath("E:\\Romain\\Documents\\Romain bidouille\\Informatique\\Taf\\Datamet\\Exemple résultat")
         self.foldertree = FolderTree(self, parent, path)
         self.foldertree.grid(row=0, column=0, sticky='news')
 
