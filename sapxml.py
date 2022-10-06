@@ -12,6 +12,7 @@ class SapXml(object):
     Entrée :
 
     Fonction :
+        xml_result_to_sap
 
     Question : Sous quel format on récupére les données pour la génération du xml?
     dictionnaire avec list:
@@ -41,10 +42,34 @@ class SapXml(object):
         # Parametre
         self.root_parametre = et.parse(self.path_to_xml_parametre).getroot()
 
-    def xml_result_to_sap(self):
+    def xml_result_to_sap(self, valeur_sap, file_path):
         """
-        fonction qui va générer le xml pour sap dans le cas de résultats
-        :return:
+        Fonction qui va générer le xml pour sap dans le cas de résultats
+
+        Parameters :
+            valeur_sap :
+            [{"ESSAI":
+                {"./__Essai/Source": "ValeurSource",
+                "./__Essai/TimeStamp": "ValeurTimeStamp",
+                "./__Essai/NoCommande": "ValeurNoCommande",
+                "./__Essai/NoPoste": "ValeurNoPoste",
+                "./__Essai/Batch": "ValeurBatch",
+                "./__Essai/SequenceLoc": "ValeurSequenceLoc"},
+            "Eprouvettes":
+                [
+                # A répéter pour chaque eprouvette
+                {"EPROUVETTE":
+                    {"./SeqEssais": "ValeurSeqEssais"},
+                    # A répéter pour chaque parametres de l'eprouvette
+                    "Parametres":
+                        [{"./NumPara": "ValeurNumPara",
+                        "./UnitPara": "UnitPara",
+                         "./ValuePara": "ValeurValuePara",
+                         "./ValueParaT": "ValeurValueParaT",
+                         "./SequenceResult": "ValeurSequenceResult",
+                         "./SequenceEssEpr": "ValeurSequenceEssEpr"}]}]}]
+        return :
+
         """
         print('result_to_sap fonction')
 
@@ -68,9 +93,9 @@ def xml_pdf_to_tiff(essais_id, pdf_name):
     # On créer le nom du fichier xml et on définit ou l'enregistrer
     xml_name = "\IC_PL_ESS_RES_" + essais_id[1] + "_" + essais_id[2] + "_" + essais_id[3] + "_" + essais_id[4] + "_" + \
                essais_id[5] + ".xml"
-    xml_path_to_save = config.get('Annexe', 'SaveXMLTiffFolder') + xml_name
+    #xml_path_to_save = config.get('Annexe', 'SaveXMLTiffFolder') + xml_name
 
-    xml_template_folder = config.get('Annexe', 'XMLTemplateFolder')
+    xml_template_folder = r"E:\Romain\Documents\Romain bidouille\Informatique\Taf\Datamet\Xml Template"
 
     path_to_xml_essais = os.path.join(xml_template_folder, 'xml_template_essais.xml')
     path_to_xml_eprouvette = os.path.join(xml_template_folder, 'xml_template_eprouvette.xml')
@@ -118,21 +143,70 @@ def xml_pdf_to_tiff(essais_id, pdf_name):
 
 if __name__ == '__main__':
     print('sapxml.py')
+    dirname = os.path.dirname(__file__)
 
-    testresultat = {"Essais": [{"ID ESSAI": "Valeur ID ESSAIS List",
-                                "Eprouvettes": [{"ID EPROUVETTE": "Valeur ID Eprouvette",
-                                                "Parametres": [{"ParaSAP": "Valeur PAra SAP",
-                                                                "Resultat para SAP": "Valeur résultat para sap"}]}]}]}
+    testresultat = [{"ESSAI": {"./__Essai/Source": "ValeurSource", "./__Essai/TimeStamp": "ValeurTimeStamp",
+                                          "./__Essai/NoCommande": "ValeurNoCommande", "./__Essai/NoPoste": "ValeurNoPoste",
+                                          "./__Essai/Batch": "ValeurBatch", "./__Essai/SequenceLoc": "ValeurSequenceLoc"},
+                                "Eprouvettes": [{"EPROUVETTE": {"./SeqEssais": "ValeurSeqEssais"},
+                                                 "Parametres": [{"./NumPara": "ValeurNumPara",
+                                                                 "./UnitPara": "UnitPara",
+                                                                 "./ValuePara": "ValeurValuePara",
+                                                                 "./ValueParaT": "ValeurValueParaT",
+                                                                 "./SequenceResult": "ValeurSequenceResult",
+                                                                 "./SequenceEssEpr": "ValeurSequenceEssEpr"}]}]}]
 
     # print(type(testresultat))
     # print(testresultat)
     # print(testresultat["Essais"])
     # print(type(testresultat["Essais"]))
 
-    for essai in testresultat["Essais"]:
-        print(essai)
+    #Essai création xml
+    xml_template_folder = r"E:\Romain\Documents\Romain bidouille\Informatique\Taf\Datamet\Xml Template"
+
+    path_to_xml_essais = os.path.join(xml_template_folder, 'xml_template_essais.xml')
+    path_to_xml_eprouvette = os.path.join(xml_template_folder, 'xml_template_eprouvette.xml')
+    path_to_xml_parametre = os.path.join(xml_template_folder, 'xml_template_parametre.xml')
+    # import des templates
+    # Essais
+    root_essais = et.parse(path_to_xml_essais).getroot()
+    # Eprouvette
+    root_eprouvette = et.parse(path_to_xml_eprouvette).getroot()
+    # Parametre
+    root_parametre = et.parse(path_to_xml_parametre).getroot()
+
+    print(type(testresultat))
+    for essai in testresultat:
+        ident_essai = essai['ESSAI']
         # récupération de l'i de l'essai
-        print("Liste des valeurs Id essai : " +essai["ID ESSAI"])
+        for balise_essai in ident_essai:
+            print(balise_essai + " - " + str(ident_essai[balise_essai]))
+            root_essais.find(balise_essai).text = ident_essai[balise_essai]
+
         # récupération des Eprouvette de l'essai :
         for eprouvette in essai['Eprouvettes']:
-            print(eprouvette)
+            ident_eprouvette = eprouvette['EPROUVETTE']
+            for balise_eprouvette in ident_eprouvette:
+                print(balise_eprouvette + " - " + str(ident_eprouvette[balise_eprouvette]))
+                root_eprouvette.find(balise_eprouvette).text = ident_eprouvette[balise_eprouvette]
+
+            # récupération des paramétres de l'eprouvette
+            for parametre in eprouvette["Parametres"]:
+                for balise_parametre in parametre:
+                    print(balise_parametre + " - " + parametre[balise_parametre])
+                    root_parametre.find(balise_parametre).text = parametre[balise_parametre]
+
+                # On ajoute les parametres dans Eprouvette
+                root_eprouvette.find("./Parametres").insert(0, root_parametre)
+
+            # On ajoute les Eprouvettes dans Essais :
+            root_essais.find("./__Essai/Eprouvettes").insert(0, root_eprouvette)
+
+        # On crée le fichier xml de l'essai en cours
+        et.indent(root_essais)
+        et.ElementTree(root_essais).write(os.path.join(dirname, "sap.xml"), pretty_print=True, encoding='ISO-8859-1')
+
+
+    print(et.tostring(root_essais))
+    print(et.tostring(root_eprouvette))
+    # print(et.tostring(root_parametre))
