@@ -57,51 +57,79 @@ On fera le XML dans un autre fichier .py
 
 import os
 import csv
+import glob
 from configparser import ConfigParser
 import pandas as pd
 
 
-class Mesures(object):
+class Mesures:
     """
     Class pour la lecture des informations des fichiers "Mesures"
     """
-
     def __init__(self):
+        #path = r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\ISO 643_INT_277171_2022-06-07_10-59-04\277171_Mesures.txt"
         self.mesures = ConfigParser()
         self.path_mesures_file = None
 
     def read(self):
         self.mesures.read(self.path_mesures_file)
 
-    def set_path(self, path_mesures_file):
-        self.path_mesures_file = path_mesures_file
-        file_exist = self.mesures.read(self.path_mesures_file)
-        if not file_exist:
-            self.path_mesures_file = None
-            raise ValueError('Aucun fichier de mesure trouvé')
+    def set_path(self, path_mesures_folder):
+        os.chdir(path_mesures_folder)
+        files = [file for file in glob.glob('*Mesures.txt')]
+        os.chdir(os.path.dirname(__file__))
+        # for file in glob.glob('*Mesures.txt'):
+        #     print(file)
+        if len(files) == 1:
+            self.path_mesures_file = os.path.join(path_mesures_folder, files[0])
+            file_exist = self.mesures.read(self.path_mesures_file)
+            if not file_exist:
+                self.path_mesures_file = None
+                raise ValueError('Aucun fichier de mesure trouvé')
+        else:
+            raise ValueError('Probleme lors de la recherche du fichier *Mesures.txt')
 
     def get_sections(self):
         if self.path_mesures_file:
             self.read()
+            result = []
             sections = self.mesures.sections()
             for section in sections:
-                print(section)
-                print(self.mesures.items(section))
-                print(type(self.mesures.items(section)))
+                result.append([section, self.mesures.items(section)])
+                # print(section)
+                # print(self.mesures.items(section))
+            return result
+
+
+class Resultats:
+    """
+    Class pour la lecture des informations des fichiers "Resultats"
+    """
+    def __init__(self):
+        self.df_results = []
+
+    def read(self):
+        path_result = r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\ISO 643_INT_277171_2022-06-07_10-59-04\277171_Resultats.txt"
+        self.df_results = pd.read_csv(path_result, encoding='ANSI', sep=';')
+
 
 
 if __name__ == '__main__':
     # test lecture fichier mesures
-    # path = os.path.abspath(
-    #     "C:\\Users\\CRMC\\PycharmProjects\\Datamet\\Exemple résultat\\ISO 643_INT_277171_2022-06-07_10-59-04\\277171_Mesures.txt")
-    path = os.path.abspath(
-        r"E:\Romain\Documents\Romain bidouille\Informatique\Taf\Datamet\Exemple résultat\ISO 643_INT_277171_2022-06-07_10-59-04\277171_Mesures.txt")
+    path = r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\ISO 643_INT_277171_2022-06-07_10-59-04"
+    #path = os.path.abspath(
+    #    r"E:\Romain\Documents\Romain bidouille\Informatique\Taf\Datamet\Exemple résultat\ISO 643_INT_277171_2022-06-07_10-59-04\277171_Mesures.txt")
     # Mesures = ConfigParser()
     # Mesures.read(path)
     # print(Mesures.get('General', 'Module'))
+    # test = Mesures()
+    # test.set_path(path_mesures_folder=path)
+    # test3 = test.get_sections()
+    #
+    # for sections in test3:
+    #     for section in sections:
+    #         print(section)
 
-    test = Mesures(path)
-    # test.read(path)
     # test.mesures.get('General', 'Module')
 
     # # Lecture fichier de résultats
@@ -110,3 +138,10 @@ if __name__ == '__main__':
     #     for row in reader:
     #         for key in row:
     #             print(key, ' -> ', row[key])
+
+
+    # Test lecture fichier de résultats
+    path_result =r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\ISO 643_INT_277171_2022-06-07_10-59-04\277171_Resultats.txt"
+
+    df = pd.read_csv(path_result, encoding='ANSI', sep=';')
+    print(df)

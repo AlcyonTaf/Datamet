@@ -21,6 +21,9 @@ Structure :
             - Images_Traitement_XXXXX
                 - Présent en fonction de la méthode
 
+TODO : voir pour créer un suivi de ce qui a été transmis ou non : BD ou juste déplacement dans un autre répertoire?
+TODO : Est ce qu'il faut prévoir d'archiver les dossiers? je dirais que oui pour eviter d'avoir une liste trop grande
+TODO : Trier la liste des dossiers par date de création, plus récent en 1er
 
 
 """
@@ -32,6 +35,10 @@ from tkinter import ttk, Text, OptionMenu, StringVar, filedialog as fd, Label
 from tkinter.messagebox import showinfo, showerror, askyesno
 # Utilitaire fichier/dossier
 import os
+
+# import fichier
+import resultats
+
 # Trouver tous les fichiers d'un dossier
 # import glob
 # Manipulation de données
@@ -74,10 +81,49 @@ class FolderTree(tk.Frame):
         xsb.grid(row=1, column=0, sticky='ew')
         self.grid()
 
+        # Treeview event click => Pour affichage des info dans détails
+        self.tree.bind("<<TreeviewSelect>>", self.on_select_tree_item)
+        # Treeview event click droit => pour affichage popup menu : Désactivé pour le moment
+        #self.tree.bind("<Button-3>", self.show_popup_menu)
+
+        # remplissage de la tree view avec les données
         abspath = os.path.abspath(folderpath)
         if abspath:
             for p in os.listdir(abspath):
                 self.tree.insert('', 'end', values=(p,))
+
+        # TODO : voir pour reprendre le fonctionnement de cette fonction pour faire un trie :
+        # def get_result_date_list():
+        #     """ Fonction qui récupère la liste des dossiers export """
+        #     os.chdir(config.get('ResultsFolder', 'SuiviPath'))
+        #     result_list = ["En attente export"]
+        #     list_folder = [name for name in os.listdir(".") if os.path.isdir(name)]
+        #     # On trie la liste des dossiers en fonction de la date, plus récent en 1er
+        #     list_folder.sort(key=lambda x: datetime.strptime(x.split(' ')[2], "%d-%m-%y"), reverse=True)
+        #     result_list.extend(list_folder)
+        #     return result_list
+
+    def on_select_tree_item(self, event):
+        """
+        Lors de la sélection d'un dossier dans la treeview on va afficher les détails dans la partie text (class Details)
+        C'est pour essai pour le moment, on affiche les informations du fichier Mesures. Mais il faudrait faire avec Resultats au final
+        """
+        if len(self.tree.selection()) > 0:
+            ref_item = self.tree.selection()[0]
+            folder_name = self.tree.item(ref_item, "value")[0]
+            path = config.get('datamet', 'FolderResult')
+            path_folder_results = os.path.join(path, folder_name)
+            get_mesures.set_path(path_folder_results)
+            details = self.parent.details.text
+            details.config(state='normal')
+            details.delete('1.0', 'end')
+            for x in get_mesures.get_sections():
+                # Non du bloc
+                details.insert('end', '\n' + str(x[0]))
+                for y in x[1:]:
+                    for z in y:
+                        # info contenue dans le bloc
+                        details.insert('end', '\n' + str("   " + z[0] + " : " + z[1]))
 
 
 class MainApplication(tk.Frame):
@@ -90,10 +136,11 @@ class MainApplication(tk.Frame):
         self.grid_columnconfigure(1, weight=1)
 
         # Treeview des dossiers
-        path = os.path.abspath("C:\\Nobackup\\Dev Informatique\\GitHub Clone\\Datamet\Exemple résultat")
+        #path = os.path.abspath("C:\\Nobackup\\Dev Informatique\\GitHub Clone\\Datamet\Exemple résultat")
         # path = os.path.abspath("E:\\Romain\\Documents\\Romain bidouille\\Informatique\\Taf\\Datamet\\Exemple résultat")
-        self.foldertree = FolderTree(self, parent, path)
-        self.foldertree.grid(row=0, column=0, sticky='news')
+        path = config.get('datamet', 'FolderResult')
+        self.folder_tree = FolderTree(self, parent, path)
+        self.folder_tree.grid(row=0, column=0, sticky='news')
 
         # Partie Détails des dossier
         self.details = Details(self, parent)
@@ -152,9 +199,28 @@ class App(tk.Tk):
 
 
 if __name__ == '__main__':
-    # Interface Graphique
-    app = App()
-    app.mainloop()
+
+    if os.path.exists('config.ini'):
+        # Lecture fichier de configuration
+        config = ConfigParser()
+        config.read('config.ini', encoding='utf-8')
+        # lecture fichier de resultat
+        get_mesures = resultats.Mesures()
+        app = App()
+        app.mainloop()
+    else:
+        showerror("Error", message="Le fichier config.ini n'est pas présent.")
+        # quit()
+
+
+
+
+
+    # path = r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\ISO 643_INT_277171_2022-06-07_10-59-04\277171_Mesures.txt"
+    # test = resultats.Mesures()
+    # test.set_path(path)
+    # print(test.get_sections())
+
 
     # test lecture fichier mesures
     # path = os.path.abspath(
