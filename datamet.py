@@ -55,26 +55,35 @@ On fera le XML dans un autre fichier .py
 
 """
 
-import os
-import csv
 import glob
+import os
 from configparser import ConfigParser
+
 import pandas as pd
 
 
-class Mesures:
+class ConfigDatametSap:
+    """
+    Class pour récupérer les infos de correspondance entre datamet et SAP
+    Todo : Pas sur que je vais faire ça ici
+    """
+
+class Mesures(object):
     """
     Class pour la lecture des informations des fichiers "Mesures"
     """
+
     def __init__(self):
-        #path = r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\ISO 643_INT_277171_2022-06-07_10-59-04\277171_Mesures.txt"
+        # path = r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\ISO 643_INT_277171_2022-06-07_10-59-04\277171_Mesures.txt"
         self.mesures = ConfigParser()
         self.path_mesures_file = None
+        self.path_folder = None
 
     def read(self):
         self.mesures.read(self.path_mesures_file)
 
     def set_path(self, path_mesures_folder):
+        self.path_folder = path_mesures_folder
         os.chdir(path_mesures_folder)
         files = [file for file in glob.glob('*Mesures.txt')]
         os.chdir(os.path.dirname(__file__))
@@ -105,30 +114,58 @@ class Resultats:
     """
     Class pour la lecture des informations des fichiers "Resultats"
     """
-    def __init__(self):
+
+    def __init__(self, mesures):
         self.df_results = []
+        self.path_folder = mesures.path_folder
+        self.path_resultats_file = None
+        self.set_path()
+        self.read()
+
+    def set_path(self):
+        """
+        Pour test car apres on peut récupérer le chemin du fichier résultats dans le fichier de mesures
+        """
+        os.chdir(self.path_folder)
+        files = [file for file in glob.glob('*Resultats.txt')]
+        os.chdir(os.path.dirname(__file__))
+        # for file in glob.glob('*Mesures.txt'):
+        #     print(file)
+        if len(files) == 1:
+            self.path_resultats_file = os.path.join(self.path_folder, files[0])
+            file_exist = os.path.exists(self.path_resultats_file)
+            if not file_exist:
+                self.path_resultats_file = None
+                raise ValueError('Aucun fichier de mesure trouvé')
+        else:
+            raise ValueError('Probleme lors de la recherche du fichier *Mesures.txt')
 
     def read(self):
-        path_result = r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\ISO 643_INT_277171_2022-06-07_10-59-04\277171_Resultats.txt"
-        self.df_results = pd.read_csv(path_result, encoding='ANSI', sep=';')
-
+        #path_result = r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\ISO 643_INT_277171_2022-06-07_10-59-04\277171_Resultats.txt"
+        #print(self.path_resultats_file)
+        self.df_results = pd.read_csv(self.path_resultats_file, encoding='ANSI', sep=';')
 
 
 if __name__ == '__main__':
     # test lecture fichier mesures
     path = r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\ISO 643_INT_277171_2022-06-07_10-59-04"
-    #path = os.path.abspath(
+    # path = os.path.abspath(
     #    r"E:\Romain\Documents\Romain bidouille\Informatique\Taf\Datamet\Exemple résultat\ISO 643_INT_277171_2022-06-07_10-59-04\277171_Mesures.txt")
     # Mesures = ConfigParser()
     # Mesures.read(path)
     # print(Mesures.get('General', 'Module'))
-    # test = Mesures()
-    # test.set_path(path_mesures_folder=path)
-    # test3 = test.get_sections()
+    test = Mesures()
+    test.set_path(path_mesures_folder=path)
+    test3 = test.get_sections()
     #
-    # for sections in test3:
-    #     for section in sections:
-    #         print(section)
+    for sections in test3:
+        for section in sections:
+            print(section)
+
+    result = Resultats(test)
+
+    print(result.df_results)
+    # result.read()
 
     # test.mesures.get('General', 'Module')
 
@@ -139,9 +176,8 @@ if __name__ == '__main__':
     #         for key in row:
     #             print(key, ' -> ', row[key])
 
-
     # Test lecture fichier de résultats
-    path_result =r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\ISO 643_INT_277171_2022-06-07_10-59-04\277171_Resultats.txt"
-
-    df = pd.read_csv(path_result, encoding='ANSI', sep=';')
-    print(df)
+    # path_result =r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\ISO 643_INT_277171_2022-06-07_10-59-04\277171_Resultats.txt"
+    #
+    # df = pd.read_csv(path_result, encoding='ANSI', sep=';')
+    # print(df)

@@ -37,7 +37,7 @@ from tkinter.messagebox import showinfo, showerror, askyesno
 import os
 
 # import fichier
-import resultats
+import datamet
 
 # Trouver tous les fichiers d'un dossier
 # import glob
@@ -113,17 +113,32 @@ class FolderTree(tk.Frame):
             folder_name = self.tree.item(ref_item, "value")[0]
             path = config.get('datamet', 'FolderResult')
             path_folder_results = os.path.join(path, folder_name)
+            # Test class Mesures()
             get_mesures.set_path(path_folder_results)
-            details = self.parent.details.text
-            details.config(state='normal')
-            details.delete('1.0', 'end')
+            details_mesures = self.parent.details_mesures.text
+            details_mesures.config(state='normal')
+            details_mesures.delete('1.0', 'end')
             for x in get_mesures.get_sections():
                 # Non du bloc
-                details.insert('end', '\n' + str(x[0]))
+                details_mesures.insert('end', '\n' + str(x[0]))
                 for y in x[1:]:
                     for z in y:
                         # info contenue dans le bloc
-                        details.insert('end', '\n' + str("   " + z[0] + " : " + z[1]))
+                        details_mesures.insert('end', '\n' + str("   " + z[0] + " : " + z[1]))
+
+            # Test class Resultats()
+            details_resultats = self.parent.details_resultats.text
+            details_resultats.config(state='normal')
+            details_resultats.delete('1.0', 'end')
+            try:
+                get_resultats = datamet.Resultats(get_mesures)
+            except:
+                pass
+            else:
+                df_resultats = get_resultats.df_results
+                details_resultats.insert('end', '\n' + str(df_resultats.iloc[0]))
+
+
 
 
 class MainApplication(tk.Frame):
@@ -134,6 +149,7 @@ class MainApplication(tk.Frame):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
+        self.grid_columnconfigure(2, weight=1)
 
         # Treeview des dossiers
         #path = os.path.abspath("C:\\Nobackup\\Dev Informatique\\GitHub Clone\\Datamet\Exemple résultat")
@@ -142,9 +158,14 @@ class MainApplication(tk.Frame):
         self.folder_tree = FolderTree(self, parent, path)
         self.folder_tree.grid(row=0, column=0, sticky='news')
 
-        # Partie Détails des dossier
-        self.details = Details(self, parent)
-        self.details.grid(row=0, column=1, sticky='news')
+        # Pour afficher le détails du fichier Mesures
+        self.details_mesures = Details(self, parent)
+        self.details_mesures.grid(row=0, column=1, sticky='news')
+
+        # Pour afficher le détails du fichier Résutlats
+        self.details_resultats = Details(self, parent)
+        self.details_resultats.grid(row=0, column=2, sticky='news')
+
 
         # self.test_result_list = TestResultList(self)
         # self.test_result_list.grid(row=0, column=1, sticky='news')
@@ -177,7 +198,10 @@ class App(tk.Tk):
         self.config(menu=self.menubar)
 
         self.title("Gestion de l'export dans SAP des résultats du logiciel DATAMET")
-        #self.geometry('640x480')
+        # width = self.winfo_screenwidth()
+        # height = self.winfo_screenheight()
+        # self.geometry("%dx%d" % (width, height))
+        self.state('zoomed')
         # self.maxsize(1280, 600)
         # self.minsize(300, 400)
 
@@ -205,7 +229,7 @@ if __name__ == '__main__':
         config = ConfigParser()
         config.read('config.ini', encoding='utf-8')
         # lecture fichier de resultat
-        get_mesures = resultats.Mesures()
+        get_mesures = datamet.Mesures()
         app = App()
         app.mainloop()
     else:
