@@ -131,7 +131,9 @@ class FolderTree(tk.Frame):
             details_resultats.config(state='normal')
             details_resultats.delete('1.0', 'end')
             try:
-                get_resultats = datamet.Resultats(get_mesures)
+                get_resultats = datamet.Resultats()
+                get_resultats.set_path(path_folder_results)
+                get_resultats.read()
             except:
                 pass
             else:

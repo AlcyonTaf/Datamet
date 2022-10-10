@@ -54,13 +54,71 @@ On s'en servira ici pour récupérer les bonnes informations
 On fera le XML dans un autre fichier .py
 
 """
-
+import main
 import glob
 import os
 from configparser import ConfigParser
 
 import pandas as pd
 
+class DatametToSAP(object):
+    """
+    Class qui va récupérer et mettre en forme les résultats des mesures pour les transmettres a la class SAPXml
+    """
+
+    def __init__(self):
+        self.ToSap = ""
+        self.essai_tpl = {"ESSAI": {"./__Essai/Source": "",
+                                    "./__Essai/TimeStamp": "",
+                                    "./__Essai/NoCommande": "",
+                                    "./__Essai/NoPoste": "",
+                                    "./__Essai/Batch": "",
+                                    "./__Essai/SequenceLoc": ""},
+                            "Eprouvettes": []}
+        self.epr_tpl = {"EPROUVETTE": {"./SeqEssais": "ValeurSeqEssais"},
+                            "Parametres": []}
+        self.para_tpl = {"./NumPara": "ValeurNumPara",
+                         "./UnitPara": "UnitPara",
+                         "./ValuePara": "ValeurValuePara",
+                         "./ValueParaT": "ValeurValueParaT",
+                         "./SequenceResult": "ValeurSequenceResult",
+                         "./SequenceEssEpr": "ValeurSequenceEssEpr"}
+
+    def test(self, module_datamet):
+        # Il va falloir chercher la famille SAP en fonction du module datamet
+        # on utilise le fichier excel
+        config = ConfigParser()
+        config.read('config.ini', encoding='utf-8')
+        excel_config_file = config.get('datametToSAP', 'ExcelConfig')
+        df_datamet_fam = pd.read_excel(excel_config_file, sheet_name="Famille-methode")
+        # on cherche le module pour trouver la famille
+        fam_sap = df_datamet_fam.loc[df_datamet_fam['Méthode Datamet'] == module_datamet, 'Famille SAP'].item()
+        print(fam_sap)
+
+        # On récupère la liste des paras pour cette famille
+        df_SAP_fam = pd.read_excel(excel_config_file, sheet_name="ZCMT")
+        # On sélectionne uniquement la famille
+        df_SAP_fam = df_SAP_fam[df_SAP_fam['Famille Essai'] == fam_sap ]
+        print(df_SAP_fam)
+
+        # On récupère la liste des ZES paraV pour cette famille
+        df_SAP_ZES_ParaV = pd.read_excel(excel_config_file, sheet_name="ZES_PARA_CND_V")
+        # sélection de la famille en cours
+        df_SAP_ZES_ParaV = df_SAP_ZES_ParaV[df_SAP_ZES_ParaV['Famille Essai'] == fam_sap]
+        print(df_SAP_ZES_ParaV)
+
+        # On récupère la lsite de paraV autre que ZES
+        # Opérateur par exemple
+        df_SAP_ParaV = pd.read_excel(excel_config_file, sheet_name="ParaV")
+        print(df_SAP_ParaV)
+
+        # On va commencer par chercher les paraV, puis les paraV ZES, puis le reste
+        df_tmp_SAP_PARA = df_SAP_fam[df_SAP_fam['ParaV'] == 'Oui']
+        print(df_tmp_SAP_PARA)
+
+        # on parcours les resultats
+        for index, row in df_tmp_SAP_PARA.iterrows():
+            print(str(row['Paramètre']) + " - " + str(row['Datamet']))
 
 class ConfigDatametSap:
     """
@@ -78,6 +136,7 @@ class Mesures(object):
         self.mesures = ConfigParser()
         self.path_mesures_file = None
         self.path_folder = None
+
 
     def read(self):
         self.mesures.read(self.path_mesures_file)
@@ -115,24 +174,24 @@ class Resultats:
     Class pour la lecture des informations des fichiers "Resultats"
     """
 
-    def __init__(self, mesures):
+    def __init__(self):
         self.df_results = []
-        self.path_folder = mesures.path_folder
+        # Todo : a modifier pour ne pas etre obliger d'utiliser Mesures() avant
         self.path_resultats_file = None
-        self.set_path()
-        self.read()
+        self.path_mesures_folder = None
 
-    def set_path(self):
+    def set_path(self, path_mesures_folder):
         """
         Pour test car apres on peut récupérer le chemin du fichier résultats dans le fichier de mesures
         """
-        os.chdir(self.path_folder)
+        self.path_mesures_folder = path_mesures_folder
+        os.chdir(path_mesures_folder)
         files = [file for file in glob.glob('*Resultats.txt')]
         os.chdir(os.path.dirname(__file__))
         # for file in glob.glob('*Mesures.txt'):
         #     print(file)
         if len(files) == 1:
-            self.path_resultats_file = os.path.join(self.path_folder, files[0])
+            self.path_resultats_file = os.path.join(path_mesures_folder, files[0])
             file_exist = os.path.exists(self.path_resultats_file)
             if not file_exist:
                 self.path_resultats_file = None
@@ -154,17 +213,17 @@ if __name__ == '__main__':
     # Mesures = ConfigParser()
     # Mesures.read(path)
     # print(Mesures.get('General', 'Module'))
-    test = Mesures()
-    test.set_path(path_mesures_folder=path)
-    test3 = test.get_sections()
+    # test = Mesures()
+    # test.set_path(path_mesures_folder=path)
+    # test3 = test.get_sections()
+    # #
+    # for sections in test3:
+    #     for section in sections:
+    #         print(section)
     #
-    for sections in test3:
-        for section in sections:
-            print(section)
-
-    result = Resultats(test)
-
-    print(result.df_results)
+    # result = Resultats(test)
+    #
+    # print(result.df_results)
     # result.read()
 
     # test.mesures.get('General', 'Module')
@@ -181,3 +240,9 @@ if __name__ == '__main__':
     #
     # df = pd.read_csv(path_result, encoding='ANSI', sep=';')
     # print(df)
+
+
+    # test datamettosap
+
+    test = DatametToSAP()
+    test.test('Norme ISO 643')
