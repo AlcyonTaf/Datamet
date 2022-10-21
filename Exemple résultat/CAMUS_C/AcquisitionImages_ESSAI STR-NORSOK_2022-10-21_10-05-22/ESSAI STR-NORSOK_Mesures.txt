@@ -1,0 +1,110 @@
+
+
+[General]
+Application=METALIA Version 5.7u
+Date=2022/10/21 09:59:47
+Module=Acquisition d'image
+DefinitionEncadrementObjets=MBR
+NbEchantillons=1
+NbZones=1
+Operateur=C. Camus
+FichierResultats=D:\Sessions Metalia\C Camus\AcquisitionImages_ESSAI STR-NORSOK_2022-10-21_10-05-22\ESSAI STR-NORSOK_Resultats.txt
+FormatImages=tif
+
+
+[Echantillon1]
+Repere=ESSAI STR-NORSOK
+Coulee=COMMANDE
+Nuance=
+Origine=
+Produit=
+AttaqueChimique=
+Commentaire=QRCODE
+RCoulee=Coulée;Heat;Heat
+Coulée=COMMANDE
+RNuance=Nuance;Grade;Grade
+RProduit=Produit;Product;Product
+ROrigine=Origine;Origin;Origin
+Point1=10847.2;-22956.2
+Point2=-13663;-22956.2
+Point3=-13663.2;-2182
+Point4=10188.2;-2182
+Point1Repos=10188.2;-22956.2
+Point2Repos=-13663;-22956.2
+Point3Repos=-13663;-2182
+Point4Repos=10188.2;-2182
+Longueur=23851.2
+Hauteur=20774.2
+Surface=495489599.04
+Angle_X=0
+
+
+[Methode]
+GeometrieEchantillon=rectangle
+GeometrieZone=rectangle
+GeometrieSens=0
+GeometrieLaminage=X
+CameraPilote=4UEye UI328xCP-C 4103619369
+CameraConfiguration=0
+CameraNomConfiguration=1024x1024 N&B
+MicroscopeTailleImage=1024 x 1024
+MicroscopeFiltre=Sans filtre
+MicroscopeFichierCalibration=CalibrationsUEYE_1.ini
+MicroscopeGrossissement=500
+MicroscopeProjectif=1
+MicroscopeObjectif=50
+MicroscopeTaillePixel=0.06900
+MicroscopeTaillePixelX=0.06900
+MicroscopeTaillePixelY=0.06900
+UniteMesure=µm
+TaillePixel=0.069
+MicroscopeSurfaceImage=4992.27034
+MiseAuPointType=Triangulation
+MiseAuPointNbPoints=5
+MiseAuPointLimiteEcartMoyen=5
+MiseAuPointLimiteEcartMaximal=10
+FormatImages=tif
+AcquisitionEchelle=oui
+AcquisitionAutomatique=non
+AcquisitionFichierParametres=
+
+
+[Zone1_1]
+Maximale=1
+Retrait=1000
+Centree=0
+CentreeSurface=0
+L1=21851
+L2=18774
+D1=1000
+D2=1000
+Balayage_Type=Predefini positions
+Balayage_SansPositionBloquee=oui
+Balayage_Retrait=0
+Balayage_EspacementX=0
+Balayage_EspacementY=0
+Balayage_NbChamps=-1
+Balayage_Duree=0
+Balayage_NbObjets=0
+Balayage_FichierPositions=C:\DATAMET\Metalia_64\Configuration\Balayage Positions\NorsokSTR.ini
+TriangulationX1=9152.4
+TriangulationY1=-21920.6
+TriangulationZ1=-10554.46
+TriangulationX2=-12627.6
+TriangulationY2=-21920.6
+TriangulationZ2=-10266.89
+TriangulationX3=-12627.6
+TriangulationY3=-3217.4
+TriangulationZ3=-10016.119
+TriangulationX4=9152.4
+TriangulationY4=-3217.4
+TriangulationZ4=-10301.815
+TriangulationX5=-1737.6
+TriangulationY5=-12568.8
+TriangulationZ5=-10291.605
+TriangulationEcartMoyen=2.17174131294523
+TriangulationEcartMax=5.42935328236308
+ToutesImages=non
+NombreImages=50
+NombreImagesMax=82460
+NbChampsTraites=1

@@ -1,0 +1,1 @@
+Echantillon;Zone;Image;XIma;YIma;Indice 1;Proportion 1;Indice 2;Proportion 2;GrosGrain;Proportion 3;P7;P8;P9;Taille_Pixel;Surface_Image;Taille_Image;Grossissement;Date;Nom image;Session

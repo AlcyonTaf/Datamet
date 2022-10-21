@@ -1,0 +1,87 @@
+
+
+[General]
+Application=METALIA Version 5.7u
+Date=2022/10/21 11:11:50
+Module=Norme ASTM E112
+DefinitionEncadrementObjets=MBR
+NbEchantillons=1
+NbZones=1
+Operateur=C. Camus
+FichierResultats=D:\Sessions Metalia\C Camus\ASTM E112_INT_GRN E112_2022-10-21_11-12-32\GRN E112_Resultats.txt
+
+
+[Echantillon1]
+Repere=GRN E112
+Coulee=COMMANDE
+Nuance=
+Origine=
+Produit=
+AttaqueChimique=
+Commentaire=QRCODE
+RCoulee=Coulée;Heat;Heat
+Coulée=COMMANDE
+RNuance=Nuance;Grade;Grade
+RProduit=Produit;Product;Product
+ROrigine=Origine;Origin;Origin
+Point1=15146.2;-25247.2
+Point2=-12491.4;-24624
+Point3=-12491.4;-1882.8
+Point4=15816.8;-1882.8
+Point1Repos=15146.2;-24624
+Point2Repos=-12491.4;-24624
+Point3Repos=-12491.4;-1882.8
+Point4Repos=15146.2;-1882.8
+Longueur=27637.6
+Hauteur=22741.2
+Surface=628512189.12
+Angle_X=0
+
+
+[Methode]
+GeometrieEchantillon=rectangle
+GeometrieZone=rectangle
+GeometrieSens=0
+GeometrieLaminage=X
+CameraPilote=4UEye UI328xCP-C 4103619369
+CameraConfiguration=0
+CameraNomConfiguration=1024x1024 N&B
+MicroscopeTailleImage=1024 x 1024
+MicroscopeFiltre=Sans filtre
+MicroscopeFichierCalibration=CalibrationsUEYE_1.ini
+MicroscopeGrossissement=100
+MicroscopeProjectif=1
+MicroscopeObjectif=10
+MicroscopeTaillePixel=0.34500
+MicroscopeTaillePixelX=0.34500
+MicroscopeTaillePixelY=0.34500
+UniteMesure=µm
+TaillePixel=0.345
+MicroscopeSurfaceImage=124806.75840
+MiseAuPointType=Manuelle
+MethodeMesure=Intercepts
+SauvegardeImages=oui
+LignesIntercepts=Verticale-horizontale
+LignesInterceptsCouleur=255,0,0
+LignesInterceptsEpaisseur=2
+InterceptsMixte=non
+CorrectionSurface=non
+
+
+[Zone1_1]
+Maximale=0
+Retrait=0
+Centree=1
+CentreeSurface=100000000
+L1=11024.2366442612
+L2=9070.9228427218
+D1=8306.88167786938
+D2=6835.0385786391
+Balayage_Type=Aleatoire sans recouvrement
+Balayage_SansPositionBloquee=oui
+Balayage_Retrait=0
+Balayage_EspacementX=0
+Balayage_EspacementY=0
+Balayage_NbChamps=-1
+Balayage_Duree=0
+Balayage_NbObjets=0

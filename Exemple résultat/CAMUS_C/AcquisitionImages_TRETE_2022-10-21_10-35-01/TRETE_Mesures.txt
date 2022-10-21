@@ -1,0 +1,93 @@
+
+
+[General]
+Application=METALIA Version 5.7u
+Date=2022/10/21 10:33:35
+Module=Acquisition d'image
+DefinitionEncadrementObjets=MBR
+NbEchantillons=1
+NbZones=1
+Operateur=C. Camus
+FichierResultats=D:\Sessions Metalia\C Camus\AcquisitionImages_TRETE_2022-10-21_10-35-01\TRETE_Resultats.txt
+FormatImages=tif
+
+
+[Echantillon1]
+Repere=TRETE
+Coulee=
+Nuance=
+Origine=
+Produit=
+AttaqueChimique=
+Commentaire=
+RCoulee=Coulée;Heat;Heat
+Coulée=
+RNuance=Nuance;Grade;Grade
+RProduit=Produit;Product;Product
+ROrigine=Origine;Origin;Origin
+Point1=10847.2;-22956.2
+Point2=-13663;-22956.2
+Point3=-13663.2;-2182
+Point4=10188.2;-2182
+Point1Repos=10188.2;-22956.2
+Point2Repos=-13663;-22956.2
+Point3Repos=-13663;-2182
+Point4Repos=10188.2;-2182
+Longueur=23851.2
+Hauteur=20774.2
+Surface=495489599.04
+Angle_X=0
+
+
+[Methode]
+GeometrieEchantillon=rectangle
+GeometrieZone=rectangle
+GeometrieSens=0
+GeometrieLaminage=X
+CameraPilote=4UEye UI328xCP-C 4103619369
+CameraConfiguration=0
+CameraNomConfiguration=1024x1024 N&B
+MicroscopeTailleImage=1024 x 1024
+MicroscopeFiltre=Sans filtre
+MicroscopeFichierCalibration=CalibrationsUEYE_1.ini
+MicroscopeGrossissement=200
+MicroscopeProjectif=1
+MicroscopeObjectif=20
+MicroscopeTaillePixel=0.17300
+MicroscopeTaillePixelX=0.17300
+MicroscopeTaillePixelY=0.17300
+UniteMesure=µm
+TaillePixel=0.173
+MicroscopeSurfaceImage=31382.83110
+MiseAuPointType=Manuelle
+MiseAuPointNbPoints=5
+MiseAuPointLimiteEcartMoyen=8
+MiseAuPointLimiteEcartMaximal=20
+FormatImages=tif
+AcquisitionEchelle=oui
+AcquisitionAutomatique=non
+AcquisitionFichierParametres=
+
+
+[Zone1_1]
+Maximale=1
+Retrait=1000
+Centree=0
+CentreeSurface=0
+L1=21851
+L2=18774
+D1=1000
+D2=1000
+Balayage_Type=Predefini positions
+Balayage_SansPositionBloquee=oui
+Balayage_Retrait=0
+Balayage_EspacementX=0
+Balayage_EspacementY=0
+Balayage_NbChamps=-1
+Balayage_Duree=0
+Balayage_NbObjets=0
+Balayage_FichierPositions=C:\DATAMET\Metalia_64\Configuration\Balayage Positions\NorsokSTR.ini
+ToutesImages=oui
+NombreImages=50
+NombreImagesMax=13144
+NbChampsTraites=6

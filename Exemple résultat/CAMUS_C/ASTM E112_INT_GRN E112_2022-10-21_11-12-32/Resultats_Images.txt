@@ -1,0 +1,2 @@
+Echantillon;Zone;Image;XIma;YIma;Indice;IndiceV;IndiceH;NbInterceptsV;NbInterceptsH;NbIntercepts;P7;P8;P9;Taille_Pixel;Surface_Image;Taille_Image;Grossissement;Date;Nom image;Session
+1;1;669;-3089;-15903.4;4.2995445667273;3.71457820870728;4.88451092474732;4;6;10;-1;-1;-1;0.345;0.12;1024;100;2022-10-21_11-13-05;D:\Sessions Metalia\C Camus\ASTM E112_INT_GRN E112_2022-10-21_11-12-32\Images_GRN E112\GRN E112_Champ_1_1_669.tif;ASTM E112_INT_GRN E112_2022-10-21_11-12-32

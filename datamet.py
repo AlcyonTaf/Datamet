@@ -2,7 +2,7 @@
 
 """
 Le fichier de résultats présent a la racine du dossier de la session est un CSV qui contient ces informations
- (Vérifier quelles sont identiques pour chaque type de mesure :
+ (pas forcément le même pour chaque méthodes :
 Repere
 Coulée
 Nuance
@@ -276,6 +276,7 @@ class Mesures(object):
                 self.path_mesures_file = None
                 raise ValueError('Aucun fichier de mesure trouvé')
         else:
+            # Todo : voir pour faire autrement car pour certain essais il n'y a pas de fichier mesures
             raise ValueError('Probleme lors de la recherche du fichier *Mesures.txt')
 
     def get_sections(self):
@@ -377,5 +378,5 @@ if __name__ == '__main__':
     # test datamettosap
 
     test = DatametToSAP(path)
-    test.current_time_sap()
+    #test.current_time_sap()
 
