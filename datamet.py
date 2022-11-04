@@ -54,14 +54,39 @@ On s'en servira ici pour récupérer les bonnes informations
 On fera le XML dans un autre fichier .py
 
 """
-import main
 import glob
 import os
+
+from pathlib import Path
 from datetime import datetime
 from configparser import ConfigParser
 
 import pandas as pd
 import numpy as np
+
+import main
+
+
+class FindSessionByQR():
+    """
+    Pour rechercher toutes les sessions datamet qui contiennent la valeur d'identification SAP provenant du QR Code
+    Todo :
+    """
+    def __init__(self, config, QRCode):
+        print('test')
+        config = config
+        path_sessions = config.get('datamet', 'FolderResult')
+        # On récupère la liste des fichiers de mesures
+        mesures_files = [file for file in Path(path_sessions).rglob('*Mesures.txt')]
+        # On parcourt la liste des fichiers de mesures
+        for file in mesures_files:
+            #print(file)
+            # On lit le fichier de mesures
+            mesures = Mesures()
+            mesures.set_path(os.path.dirname(file))
+            # récupération de la valeur du QR Code
+            print(mesures.get(section='Echantillon1', para='Commentaire'))
+
 
 
 class DatametToSAP(object):
@@ -304,6 +329,7 @@ class Mesures(object):
 class Resultats:
     """
     Class pour la lecture des informations des fichiers "Resultats"
+    return : un dataframe avec en colonne le nom des infos et les résultats sur la 1er lignes
     """
 
     def __init__(self):
@@ -340,15 +366,16 @@ class Resultats:
 
 if __name__ == '__main__':
     # test lecture fichier mesures
-    path = r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\ISO 643_INT_277171_2022-06-07_10-59-04"
+    path = r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\BEDERT_R\ISO 643_INT_277171_2022-06-07_10-59-04"
     # path = os.path.abspath(
     #    r"E:\Romain\Documents\Romain bidouille\Informatique\Taf\Datamet\Exemple résultat\ISO 643_INT_277171_2022-06-07_10-59-04\277171_Mesures.txt")
     # Mesures = ConfigParser()
     # Mesures.read(path)
     # print(Mesures.get('General', 'Module'))
-    # test = Mesures()
-    # test.set_path(path_mesures_folder=path)
-    # test3 = test.get_sections()
+    test = Mesures()
+    test.set_path(path_mesures_folder=path)
+    test3 = test.get_sections()
+    print(test3)
     # #
     # for sections in test3:
     #     for section in sections:
@@ -377,6 +404,6 @@ if __name__ == '__main__':
 
     # test datamettosap
 
-    test = DatametToSAP(path)
+    #test = DatametToSAP(path)
     #test.current_time_sap()
 

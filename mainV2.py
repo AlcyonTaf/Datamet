@@ -31,7 +31,7 @@ TODO : Trier la liste des dossiers par date de création, plus récent en 1er
 ### Import
 # Interface graphique
 import tkinter as tk
-from tkinter import ttk, Text, OptionMenu, StringVar, filedialog as fd, Label
+from tkinter import ttk, Text, OptionMenu, StringVar, filedialog as fd, Label, Entry, PhotoImage, Button
 from tkinter.messagebox import showinfo, showerror, askyesno
 # Utilitaire fichier/dossier
 import os
@@ -46,6 +46,9 @@ import datamet
 # Lecture fichier config
 from configparser import ConfigParser
 from pathlib import Path
+
+# Pour gestion des images
+from PIL import Image, ImageTk
 
 
 class Details(tk.Frame):
@@ -89,15 +92,15 @@ class FolderTree(tk.Frame):
 
         # remplissage de la tree view avec les données
         abspath = os.path.abspath(folderpath)
-        root_node = self.tree.insert('', 'end', text="Sessions", open=True)
-        self.process_directory(root_node, abspath)
+        self.process_directory(abspath)
 
-    def process_directory(self, parent, path):
+    def process_directory(self, path):
+        root_node = self.tree.insert('', 'end', text="Sessions", open=True)
         print(os.listdir(path))
         user_folder = {}
         for p in os.listdir(path):
             abspath = os.path.join(path, p)
-            oid = self.tree.insert(parent, 'end', text=p, open=False, values=(p,))
+            oid = self.tree.insert(root_node, 'end', text=p, open=False, values=(p,))
             paths = sorted(os.listdir(abspath), key=lambda f: -os.path.getmtime(os.path.join(abspath, f)))
             user_folder[p] = paths
             for f in paths:
@@ -195,12 +198,122 @@ class MenuMain(tk.Menu):
     def __init__(self, parent):
         tk.Menu.__init__(self, parent)
         self.parent = parent
+
+        # Menu Fichier
         self.file_menu = tk.Menu(self, tearoff=False)
         self.add_cascade(label="Fichier", underline=0, menu=self.file_menu)
+
         # self.file_menu.add_command(label="Transmettre les résultats vers SAP", underline=1,
         # command=self.parent.run_ps_popup_window)
         # self.file_menu.add_command(label="Archivage", underline=2, command=self.parent.archive_popup_window)
-        self.file_menu.add_command(label="Exit", underline=3, command=self.quit)
+        self.file_menu.add_command(label="Exit", underline=3, command=parent.destroy)
+
+        if parent.__class__.__name__ == "App":
+
+            # Menu Filtre
+            self.filtre_menu = tk.Menu(self, tearoff=False)
+            self.add_cascade(label='Traitement par lot', underline=0, menu=self.filtre_menu)
+            # On va créer une autre interface grahique avec TopLevel
+            self.filtre_menu.add_command(label='Norsok', underline=3,
+                                         command=lambda: self.parent.top_resultbyqr_open(normes='Norsok'))
+
+
+class ResultByQR(tk.Toplevel):
+    """
+
+    """
+    def __init__(self, main_app, norme):
+        self.main_app = main_app
+        super().__init__(main_app)
+        self.norme = norme
+
+
+        # format de la fenêtre
+        #self.geometry('200x200')
+        self.title('Traitement des résultats par lot')
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_rowconfigure(2, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+
+
+        # Menu
+        self.menubar = MenuMain(self)
+        self.config(menu=self.menubar)
+
+        # Gestion de l'affichage de la frame en fonction de la norme :
+        if self.norme == "Norsok":
+            self.gui = Norsok_Gui(self, self.main_app)
+            self.gui.grid(row=1, column=0, sticky='news', padx=10, pady=10)
+
+
+
+
+        # Menu déroulant pour choix de l'interface
+        # options = ["Norsok"]
+        # self.list_lot = StringVar()
+        # self.drop_down = OptionMenu(self, self.list_lot, *options, command=self.show_gui)
+        # self.drop_down.config(width=10)
+        # self.drop_down.grid(row=0, column=0, sticky='n')
+
+    # def show_gui(self, value):
+    #     if value == "Norsok":
+    #         self.gui = Norsok_Gui(self, self.main_app)
+    #         self.gui.grid(row=1, column=0, sticky='news')
+
+
+
+class Norsok_Gui(tk.Frame):
+    def __init__(self, parent, main_app):
+        super().__init__(parent)
+        self.parent = parent
+        self.main_app = main_app
+        # self.config(bg="red")
+        # self.config(height=600)
+
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_rowconfigure(2, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        #self.grid_columnconfigure(1, weight=1)
+
+        # on affiche le code barre pour config la scannette
+
+        print(os.path.join(script_path, "Pictures\\barcoderule2.gif"))
+        img_barcoderule2 = PhotoImage(file=os.path.join(script_path, 'Pictures\\barcoderule2.gif'))
+        self.lbl_img = Label(self, image=img_barcoderule2)
+        self.lbl_img.grid(row=0, column=0, sticky='n')
+        self.lbl_img.image = img_barcoderule2
+
+        # Input Text pour la valeur du QR CODE :
+        self.lbl_qrcode = Label(self, text="Scanner le Code barre si dessus, puis le QR Code sur la feuille de travail")
+        self.ety_qrcode = Entry(self, width=100)
+
+        self.lbl_qrcode.grid(row=1, column=0, sticky='n')
+        self.ety_qrcode.grid(row=2, column=0, sticky='n')
+
+        self.btn_valider = Button(self, text="Valider", command=self.test)
+        self.btn_valider.grid(row=3, column=0, sticky='n', padx=5, pady=5)
+
+        self.ety_qrcode.focus_set()
+        # 2 input text pour les QR Code :
+        # self.lbl_FRC = Label(self, text="FRC QRCODE")
+        # self.ety_FRC = Entry(self)
+        # self.lbl_STR = Label(self, text="STR QRCODE")
+        # self.ety_STR = Entry(self)
+        #
+        # self.lbl_FRC.grid(row=0, column=0, sticky='n')
+        # self.ety_FRC.grid(row=0, column=1, sticky='n')
+        # self.lbl_STR.grid(row=1, column=0, sticky='n')
+        # self.ety_STR.grid(row=1, column=1, sticky='n')
+
+    def test(self):
+        print("ok dans test")
+        sdfs = datamet.FindSessionByQR(config=config, QRCode='ValeurQRCODE')
+        print(sdfs)
+
+
+
 
 
 class App(tk.Tk):
@@ -209,7 +322,8 @@ class App(tk.Tk):
     """
 
     def __init__(self):
-        tk.Tk.__init__(self)
+        #tk.Tk.__init__(self)
+        super().__init__()
         self.menubar = MenuMain(self)
         self.config(menu=self.menubar)
 
@@ -232,6 +346,25 @@ class App(tk.Tk):
         # Shutdown watchdog
         # self.bind("<Destroy>", self.main_application.test_result_list.shutdown_watchdog)
 
+        # Gestion des fenêtres TopLevel
+        self.top_resultbyqr = None
+
+    # Pour le traitement par LOT avec QR Code
+    def top_resultbyqr_open(self, normes):
+        if self.top_resultbyqr is None:
+            self.top_resultbyqr = ResultByQR(self, norme=normes)
+        else:
+            self.top_resultbyqr.deiconify()
+        self.top_resultbyqr.bind("<Destroy>", self._child_destroyed)
+
+    def _child_destroyed(self, event):
+        if event.widget == self.top_resultbyqr:
+            print("Destuction de resultbyQR")
+            self.top_resultbyqr = None
+
+
+
+
     # afficher les erreurs
     # Todo : a reactiver
     # def report_callback_exception(self, exc, val, tb):
@@ -241,6 +374,7 @@ class App(tk.Tk):
 if __name__ == '__main__':
 
     if os.path.exists('config.ini'):
+        script_path = os.path.dirname(os.path.abspath(__file__))
         # Lecture fichier de configuration
         config = ConfigParser()
         config.read('config.ini', encoding='utf-8')
