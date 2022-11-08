@@ -66,26 +66,58 @@ import numpy as np
 
 import main
 
+def find_session_by_qr_and_module(config, qrcode, module_name):
+    """
+    Pour rechercher toutes les sessions datamet qui contiennent la valeur d'identification SAP provenant du QR Code et le module
+    Todo :
+    """
+    # print('test')
+    path_sessions = config.get('datamet', 'FolderResult')
+    finded_sessions = []
+    # On récupère la liste des fichiers de mesures
+    mesures_files = [file for file in Path(path_sessions).rglob('*Mesures.txt')]
+    # On parcourt la liste des fichiers de mesures
+    for file in mesures_files:
+        #print(file)
+        # On lit le fichier de mesures
+        mesures = Mesures()
+        mesures.set_path(os.path.dirname(file))
+        # récupération de la valeur du QR Code
+        # print(mesures.get(section='Echantillon1', para='Commentaire'))
+        qr_session = mesures.get(section='Echantillon1', para='Commentaire')
+        module_session = mesures.get(section='General', para='Module')
+        if qr_session == qrcode and module_session == module_name:
+            print("trouvé")
+            finded_sessions.append(os.path.dirname(file))
 
-class FindSessionByQR():
+    return finded_sessions
+
+def find_session_by_qr(config, qrcode):
     """
     Pour rechercher toutes les sessions datamet qui contiennent la valeur d'identification SAP provenant du QR Code
     Todo :
     """
-    def __init__(self, config, QRCode):
-        print('test')
-        config = config
-        path_sessions = config.get('datamet', 'FolderResult')
-        # On récupère la liste des fichiers de mesures
-        mesures_files = [file for file in Path(path_sessions).rglob('*Mesures.txt')]
-        # On parcourt la liste des fichiers de mesures
-        for file in mesures_files:
-            #print(file)
-            # On lit le fichier de mesures
-            mesures = Mesures()
-            mesures.set_path(os.path.dirname(file))
-            # récupération de la valeur du QR Code
-            print(mesures.get(section='Echantillon1', para='Commentaire'))
+    # print('test')
+    path_sessions = config.get('datamet', 'FolderResult')
+    finded_sessions = []
+    # On récupère la liste des fichiers de mesures
+    mesures_files = [file for file in Path(path_sessions).rglob('*Mesures.txt')]
+    # On parcourt la liste des fichiers de mesures
+    for file in mesures_files:
+        #print(file)
+        # On lit le fichier de mesures
+        mesures = Mesures()
+        mesures.set_path(os.path.dirname(file))
+        # récupération de la valeur du QR Code
+        # print(mesures.get(section='Echantillon1', para='Commentaire'))
+        qr_session = mesures.get(section='Echantillon1', para='Commentaire')
+        if qr_session == qrcode:
+            print("trouvé")
+            finded_sessions.append(os.path.dirname(file))
+
+    return finded_sessions
+
+
 
 
 

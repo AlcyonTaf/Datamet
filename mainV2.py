@@ -38,6 +38,7 @@ import os
 
 # import fichier
 import datamet
+import norsok_gui
 
 # Trouver tous les fichiers d'un dossier
 # import glob
@@ -232,10 +233,7 @@ class ResultByQR(tk.Toplevel):
         #self.geometry('200x200')
         self.title('Traitement des résultats par lot')
         self.grid_rowconfigure(0, weight=1)
-        self.grid_rowconfigure(1, weight=1)
-        self.grid_rowconfigure(2, weight=1)
         self.grid_columnconfigure(0, weight=1)
-
 
         # Menu
         self.menubar = MenuMain(self)
@@ -243,8 +241,9 @@ class ResultByQR(tk.Toplevel):
 
         # Gestion de l'affichage de la frame en fonction de la norme :
         if self.norme == "Norsok":
-            self.gui = Norsok_Gui(self, self.main_app)
-            self.gui.grid(row=1, column=0, sticky='news', padx=10, pady=10)
+            #self.gui = Norsok_Gui(self, self.main_app)
+            self.gui = norsok_gui.Norsok_Gui(self, self.main_app, script_path, config=config)
+            self.gui.grid(row=0, column=0, sticky='news', padx=10, pady=10)
 
 
 
@@ -263,54 +262,54 @@ class ResultByQR(tk.Toplevel):
 
 
 
-class Norsok_Gui(tk.Frame):
-    def __init__(self, parent, main_app):
-        super().__init__(parent)
-        self.parent = parent
-        self.main_app = main_app
-        # self.config(bg="red")
-        # self.config(height=600)
-
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_rowconfigure(1, weight=1)
-        self.grid_rowconfigure(2, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-        #self.grid_columnconfigure(1, weight=1)
-
-        # on affiche le code barre pour config la scannette
-
-        print(os.path.join(script_path, "Pictures\\barcoderule2.gif"))
-        img_barcoderule2 = PhotoImage(file=os.path.join(script_path, 'Pictures\\barcoderule2.gif'))
-        self.lbl_img = Label(self, image=img_barcoderule2)
-        self.lbl_img.grid(row=0, column=0, sticky='n')
-        self.lbl_img.image = img_barcoderule2
-
-        # Input Text pour la valeur du QR CODE :
-        self.lbl_qrcode = Label(self, text="Scanner le Code barre si dessus, puis le QR Code sur la feuille de travail")
-        self.ety_qrcode = Entry(self, width=100)
-
-        self.lbl_qrcode.grid(row=1, column=0, sticky='n')
-        self.ety_qrcode.grid(row=2, column=0, sticky='n')
-
-        self.btn_valider = Button(self, text="Valider", command=self.test)
-        self.btn_valider.grid(row=3, column=0, sticky='n', padx=5, pady=5)
-
-        self.ety_qrcode.focus_set()
-        # 2 input text pour les QR Code :
-        # self.lbl_FRC = Label(self, text="FRC QRCODE")
-        # self.ety_FRC = Entry(self)
-        # self.lbl_STR = Label(self, text="STR QRCODE")
-        # self.ety_STR = Entry(self)
-        #
-        # self.lbl_FRC.grid(row=0, column=0, sticky='n')
-        # self.ety_FRC.grid(row=0, column=1, sticky='n')
-        # self.lbl_STR.grid(row=1, column=0, sticky='n')
-        # self.ety_STR.grid(row=1, column=1, sticky='n')
-
-    def test(self):
-        print("ok dans test")
-        sdfs = datamet.FindSessionByQR(config=config, QRCode='ValeurQRCODE')
-        print(sdfs)
+# class Norsok_Gui(tk.Frame):
+#     def __init__(self, parent, main_app):
+#         super().__init__(parent)
+#         self.parent = parent
+#         self.main_app = main_app
+#         # self.config(bg="red")
+#         # self.config(height=600)
+#
+#         self.grid_rowconfigure(0, weight=1)
+#         self.grid_rowconfigure(1, weight=1)
+#         self.grid_rowconfigure(2, weight=1)
+#         self.grid_columnconfigure(0, weight=1)
+#         #self.grid_columnconfigure(1, weight=1)
+#
+#         # on affiche le code barre pour config la scannette
+#
+#         print(os.path.join(script_path, "Pictures\\barcoderule2.gif"))
+#         img_barcoderule2 = PhotoImage(file=os.path.join(script_path, 'Pictures\\barcoderule2.gif'))
+#         self.lbl_img = Label(self, image=img_barcoderule2)
+#         self.lbl_img.grid(row=0, column=0, sticky='n')
+#         self.lbl_img.image = img_barcoderule2
+#
+#         # Input Text pour la valeur du QR CODE :
+#         self.lbl_qrcode = Label(self, text="Scanner le Code barre si dessus, puis le QR Code sur la feuille de travail")
+#         self.ety_qrcode = Entry(self, width=100)
+#
+#         self.lbl_qrcode.grid(row=1, column=0, sticky='n')
+#         self.ety_qrcode.grid(row=2, column=0, sticky='n')
+#
+#         self.btn_valider = Button(self, text="Valider", command=self.test)
+#         self.btn_valider.grid(row=3, column=0, sticky='n', padx=5, pady=5)
+#
+#         self.ety_qrcode.focus_set()
+#         # 2 input text pour les QR Code :
+#         # self.lbl_FRC = Label(self, text="FRC QRCODE")
+#         # self.ety_FRC = Entry(self)
+#         # self.lbl_STR = Label(self, text="STR QRCODE")
+#         # self.ety_STR = Entry(self)
+#         #
+#         # self.lbl_FRC.grid(row=0, column=0, sticky='n')
+#         # self.ety_FRC.grid(row=0, column=1, sticky='n')
+#         # self.lbl_STR.grid(row=1, column=0, sticky='n')
+#         # self.ety_STR.grid(row=1, column=1, sticky='n')
+#
+#     def test(self):
+#         print("ok dans test")
+#         sdfs = datamet.FindSessionByQR(config=config, QRCode='ValeurQRCODE')
+#         print(sdfs)
 
 
 
