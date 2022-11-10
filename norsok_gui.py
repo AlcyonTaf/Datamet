@@ -18,7 +18,7 @@ import datamet
 import mainV2
 
 
-class Norsok_Gui(tk.Frame):
+class NorsokGui(tk.Frame):
     def __init__(self, parent, main_app, script_path, config):
         super().__init__(parent)
         self.parent = parent
@@ -31,9 +31,8 @@ class Norsok_Gui(tk.Frame):
         self.grid_columnconfigure(0, weight=1)
 
         # Frame avec des buttons d'action
-        frm_action = Norsok_btn(self)
+        frm_action = NorsokBtn(self)
         frm_action.grid(row=0, column=0, sticky='news')
-
 
         # Container va contenir les différentes pages
         container = tk.Frame(self, bg='red')
@@ -42,9 +41,9 @@ class Norsok_Gui(tk.Frame):
         container.grid_columnconfigure(0, weight=1)
 
         self.frames = {}
-        self.frames["norsok_qr"] = Norsok_QR(parent=container, controller=self)
-        self.frames["norksok_result"] = Norksok_result(parent=container, controller=self)
-
+        self.frames["norsok_qr"] = NorsokQR(parent=container, controller=self)
+        self.frames["norksok_result"] = NorksokResult(parent=container, controller=self)
+        self.frames["norsok_transfert"] = NorsokTransfert(parent=container, controller=self)
         # Page d'acueil :
         self.show_frame("norsok_qr")
 
@@ -57,7 +56,7 @@ class Norsok_Gui(tk.Frame):
         frame.grid(row=0, column=0, sticky='nesw')
 
 
-class Norsok_btn(tk.Frame):
+class NorsokBtn(tk.Frame):
     """
     Pour afficher une barre avec des boutons d'action
     # TODO : Voir a l'usage si c'est bien, sinon plutot utiliser un notebook
@@ -75,9 +74,7 @@ class Norsok_btn(tk.Frame):
         btn_suivant.grid(row=0, column=1)
 
 
-
-
-class Norsok_QR(tk.Frame):
+class NorsokQR(tk.Frame):
 
     def __init__(self, parent, controller):
         super().__init__(parent)
@@ -114,14 +111,14 @@ class Norsok_QR(tk.Frame):
         self.controller.show_frame("norksok_result")
 
 
-class Norksok_result(tk.Frame):
+class NorksokResult(tk.Frame):
 
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.parent = parent
         self.controller = controller
 
-        self.images = datamet.ImagesDatamet()
+        self.images = None
 
         self.grid_rowconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
@@ -130,6 +127,7 @@ class Norksok_result(tk.Frame):
         self.grid_rowconfigure(4, weight=1)
         self.grid_rowconfigure(5, weight=1)
         self.grid_rowconfigure(6, weight=1)
+        self.grid_rowconfigure(7, weight=1)
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
@@ -172,15 +170,21 @@ class Norksok_result(tk.Frame):
         self.images_tree_str.grid(row=4, column=1, rowspan=3, sticky='nesw')
         self.images_tree_str.bind("<Double-1>", self.on_select_images_tree_str_item)
 
-
         # Event a l'affichage
         self.bind("<<ShowFrame>>", self.on_show_frame)
+
+        # Bouton pour valider et passer au transfert
+        btn_transfert = Button(self, text="Valider", command=self.valider)
+        btn_transfert.grid(row=7, column=0, columnspan=2, sticky='esnw', padx=5, pady=5)
+
+    def valider(self):
+        self.controller.show_frame("norsok_transfert")
 
     def on_select_images_tree_str_item(self, event):
         if len(self.images_tree_str.selection()) > 0:
             ref_item = self.images_tree_str.selection()[0]
             item_values = self.images_tree_str.item(ref_item, "text")
-            test = Norsok_show_image(self.controller, self, item_values)
+            test = NorsokShowImage(self.controller, self, item_values)
             test.grab_set()
             print(item_values)
             print(ref_item)
@@ -192,14 +196,14 @@ class Norksok_result(tk.Frame):
             print(item_values)
             print(ref_item)
             if item_values:
+                self.images = datamet.ImagesDatamet()
                 self.images.get_images(item_values)
                 self.images.annotation()
                 images_list = self.images.images_annot
 
+                self.images_tree_str.delete(*self.images_tree_str.get_children())
                 for image_name in images_list:
-                    self.images_tree_str.insert('', 'end', text=image_name, values=(images_list[image_name][1]))
-
-
+                    self.images_tree_str.insert('', 'end', text=image_name, values=(images_list[image_name][1],))
 
     def on_select_tree_frc_item(self, event):
         if len(self.tree_frc.selection()) > 0:
@@ -266,7 +270,7 @@ class Norksok_result(tk.Frame):
                             self.tree_str.insert('', 'end', text=session_name, values=(session_path,))
 
 
-class Norsok_show_image(tk.Toplevel):
+class NorsokShowImage(tk.Toplevel):
     def __init__(self, main_app, parent, image_name):
         self.main_app = main_app
         self.parent = parent
@@ -277,7 +281,7 @@ class Norsok_show_image(tk.Toplevel):
 
         image_pil = self.parent.images.images_annot[image_name][0]
 
-        image_pil.thumbnail((500,500))
+        image_pil.thumbnail((500, 500))
 
         image = ImageTk.PhotoImage(image_pil)
 
@@ -286,12 +290,11 @@ class Norsok_show_image(tk.Toplevel):
         lbl.grid(row=0, column=0)
 
 
-
-
-
-class norsok_transfert(tk.Frame):
+class NorsokTransfert(tk.Frame):
 
     def __init__(self, parent, controller):
         super().__init__(parent)
         self.parent = parent
         self.controller = controller
+
+

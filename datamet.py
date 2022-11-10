@@ -123,11 +123,10 @@ def find_session_by_qr(config, qrcode):
 
 class ImagesDatamet(object):
     """
-    Class pour la récupération des images
-    entre :
-        path_folder = dossier de la session métalia
-    sortie :
-        Dictionnaire avec en clef le nom du fichier, et en valeur le fichier au bon format pour afficher avec tk
+    Class pour la récupération et le traitement des images
+    get_images : récupére les images et renvoie un dict avec le nom de l'image dans la clef, et le fichier image pil
+    en valeur. Ceci est stocké dans la variable d'instances self.images
+    annotations :
     """
 
     def __init__(self):
@@ -175,6 +174,7 @@ class ImagesDatamet(object):
             # self.images_annot = self.images
             # cas ou on a 6 images
             # On chercher la valeur de la position dans les nom des images
+            find = False
             for image_name in self.images:
                 for annot in self.annots:
                     if image_name.endswith(self.annots[annot]):
@@ -187,22 +187,34 @@ class ImagesDatamet(object):
                         add_text.text((10, heigh - 20), annot, fill=(255, 0, 0), anchor="ls", font=font)
                         # print(self.images_annot)
                         # self.images_annot[image_name][0].show()
+                        find = True
+
+                if not find:
+                    self.images_annot[image_name] = [self.images[image_name], 'Image pour structure']
+
 
 
 class DatametToSAP(object):
     """
     Class qui va récupérer et mettre en forme les résultats des mesures pour les transmettres a la class SAPXml
-    entrée :
+    entrée : dossier de la session et les images éventuelles
 
     """
 
-    def __init__(self, path_folder_datamet):
+    def __init__(self, path_folder_datamet, images=None):
+        self.images = images
         # Lecture du fichier de résultat
-        rst = Resultats()
-        rst.set_path(path_folder_datamet)
-        rst.read()
+        try:
+            self.rst = Resultats()
+            self.rst.set_path(path_folder_datamet)
+            self.rst.read()
+            self.resutat_exist = True
+        except:
+            print('pas de fichier de résultats')
+            self.resutat_exist = False
+
         # Lecture du fichier de mesure
-        self.df_results = rst.df_results
+        self.df_results = self.rst.df_results
         self.msr = Mesures()
         self.msr.set_path(path_folder_datamet)
 
@@ -246,6 +258,12 @@ class DatametToSAP(object):
 
         return para_tmp
 
+    def norsok(self):
+        """
+        Fonction dans le cas particulier des essais Norsok :
+            Il faut transférer des images d'un essai STR dans un para de l'essai FRC
+        """
+
     def test_para(self):
         # todo : comme il y a beaucoup de para qui ne sont pas transmis, on rajoute une colonne pour savoir ceux a
         #  transmettre
@@ -255,6 +273,7 @@ class DatametToSAP(object):
 
         # récupération du module
         module_datamet = self.get_datamet_module()
+        print(module_datamet)
 
         # Il va falloir chercher la famille SAP en fonction du module datamet
         # on utilise le fichier excel
@@ -272,6 +291,7 @@ class DatametToSAP(object):
         df_SAP_fam = df_SAP_fam[(df_SAP_fam['Famille Essai'] == fam_sap) & (df_SAP_fam['Envoie SAP'] == 'Oui')]
         # On fait une liste des parametres pour ensuite filtré les autres df
         lst_paras = list(df_SAP_fam['Paramètre'].values)
+        print(lst_paras)
         # print(df_SAP_fam)
         # print(df_SAP_fam['Paramètre'].values)
 
@@ -287,9 +307,6 @@ class DatametToSAP(object):
         # => parametres Qualitatif, par exemple opérateur ou Date
         # Dans la balise ValueParaT
         df_SAP_ParaT = pd.read_excel(excel_config_file, sheet_name="ParaT")
-        # sélection de la famille en cours et des paras qui sont nécessaires
-        # Todo : est ce que la famille dans ce tableau est réellement utile?
-        df_SAP_ParaT = df_SAP_ParaT[df_SAP_ParaT['Famille'] == fam_sap]
         df_SAP_ParaT = df_SAP_ParaT[df_SAP_ParaT['Paramètre'].isin(lst_paras)]
         # print(df_SAP_ParaT)
 
@@ -297,15 +314,17 @@ class DatametToSAP(object):
         # la valeur SAP
         # voir si ne peut pas etre fait avec le dataframe plutôt qu'itérer
         # On vérifie qu'on a bien des ParaT :
+        # Todo : Dans le cas ou il n'y a pas de fichier résultats, il faut chercher les info dans le fichier mesures si elle sont dispo
+        #  On rajoute une colonne dans le fichier excel pour savoir ou les trouver dans le fichier Mesures : Section,Valeur
         if not df_SAP_ParaT.empty:
             print("Traitement des parametres Qualitatif")
             # On filtre df_SAP_fam avec les parametres de df_SAP_ParaT et on itere
             df_tmp = df_SAP_fam[df_SAP_fam['Paramètre'].isin(list(df_SAP_ParaT['Paramètre'].values))]
             for index, row in df_tmp.iterrows():
-                print("Traitement du para : " + str(row['Paramètre']) + " - " + str(row['Datamet']))
+                print("Traitement du para : " + str(row['Paramètre']) + " - " + str(row['Datamet résultat']))
                 # Colonne contenant la valeur a récupérer dans le df_results
                 val_parasap = row['Paramètre']
-                col_datamet = row['Datamet']
+                col_datamet = row['Datamet résultat']
                 # récupération de la valeur Datamet
                 val_datamet = self.df_results[col_datamet].item()
                 # On cherche dans le dataframe de résultats le parametres (nom de colonne) et ça valeur
@@ -327,15 +346,17 @@ class DatametToSAP(object):
                     print("On cherche : " + val_datamet)
                     df_query = df_SAP_ParaT.query('`Valeur Datamet` == "' + val_datamet + '"')
                     # on vérifie qu'on ne trouve qu'une valeur
-                    if len(df_query.index) == 1:
-                        if not df_query.empty:
+                    if not df_query.empty:
+                        if len(df_query.index) == 1:
                             print("Valeur a transmettre a SAP : " + df_query['Valeur SAP'].item())
                             para_lst = [int(val_parasap), "", "", df_query['Valeur SAP'].item(), 1, 1]
                             all_para_lst.append(self.set_para_dict(para_lst).copy())
                         else:
-                            print('Pas de valeur trouvé dans ParaT il va falloir remonter une erreur')
+                            print("Plusieurs valeurs trouvé, ce n'est pas normale")
                     else:
-                        print("Plusieurs valeurs trouvé, ce n'est pas normale")
+                        # Il est vide, donc on renvoie la valeur tel quel
+                        para_lst =[int(val_parasap), "", "", val_datamet, 1, 1]
+                        all_para_lst.append(self.set_para_dict(para_lst).copy())
 
         # On cherche les ParaT qui sont des listes SAP
         # Todo : Faire traitement des para ZES_PARA_CND_V
@@ -348,10 +369,10 @@ class DatametToSAP(object):
         print("Traitement des parametres Qualitatif")
         if not df_tmp.empty:
             for index, row in df_tmp.iterrows():
-                print("Traitement du para : " + str(row['Paramètre']) + " - " + str(row['Datamet']))
+                print("Traitement du para : " + str(row['Paramètre']) + " - " + str(row['Datamet résultat']))
                 # Colonne contenant la valeur à récupérer dans le df_results
                 val_parasap = row['Paramètre']
-                col_datamet = row['Datamet']
+                col_datamet = row['Datamet résultat']
                 # récupération de la valeur Datamet
                 val_datamet = self.df_results[col_datamet].item()
                 print(val_datamet)
@@ -360,6 +381,11 @@ class DatametToSAP(object):
 
         print(all_para_lst)
 
+    def test_images(self, images):
+        """
+        Fonction pour récupérer les informations qui serviront a faire le XML des images
+        """
+        # On va chercher dans le tableau ZCMT les paras images a transmettre
     def test_essai(self):
         """ Test pour récupération des informations de l'essai et de l'eprouvette.
         Ces infos sont contenues dans le QR Code qui va devoir etre scanné"""
@@ -453,7 +479,7 @@ class Resultats:
                 self.path_resultats_file = None
                 raise ValueError('Aucun fichier de mesure trouvé')
         else:
-            raise ValueError('Probleme lors de la recherche du fichier *Mesures.txt')
+            raise ValueError('Probleme lors de la recherche du fichier *Resultats.txt')
 
     def read(self):
         # path_result = r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\ISO 643_INT_277171_2022-06-07_10-59-04\277171_Resultats.txt"
@@ -463,7 +489,9 @@ class Resultats:
 
 if __name__ == '__main__':
     # test lecture fichier mesures
-    path = r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\BEDERT_R\ISO 643_INT_277171_2022-06-07_10-59-04"
+    #path = r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\CAMUS_C\Fraction Phase_SEU_ESSAI FRC-NORSOK_2022-10-21_09-47-44"
+    # Test avec une aquisitiion qui ne contient pas de fichier résultats
+    path = r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\CAMUS_C\AcquisitionImages_ESSAI STR-NORSOK_2022-10-21_10-14-32"
     # path = os.path.abspath(
     #    r"E:\Romain\Documents\Romain bidouille\Informatique\Taf\Datamet\Exemple résultat\ISO 643_INT_277171_2022-06-07_10-59-04\277171_Mesures.txt")
     # Mesures = ConfigParser()
@@ -501,12 +529,13 @@ if __name__ == '__main__':
 
     # test datamettosap
 
-    # test = DatametToSAP(path)
+    test = DatametToSAP(path)
+    test.test_para()
     # test.current_time_sap()
 
     # Test class Images
-    test = ImagesDatamet()
-    imgs = test.get_images(
-        r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\CAMUS_C\AcquisitionImages_ESSAI STR-NORSOK_2022-10-21_10-14-32")
-
-    test.annotation()
+    # test = ImagesDatamet()
+    # imgs = test.get_images(
+    #     r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\CAMUS_C\AcquisitionImages_ESSAI STR-NORSOK_2022-10-21_10-14-32")
+    #
+    # test.annotation()

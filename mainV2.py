@@ -242,7 +242,7 @@ class ResultByQR(tk.Toplevel):
         # Gestion de l'affichage de la frame en fonction de la norme :
         if self.norme == "Norsok":
             #self.gui = Norsok_Gui(self, self.main_app)
-            self.gui = norsok_gui.Norsok_Gui(self, self.main_app, script_path, config=config)
+            self.gui = norsok_gui.NorsokGui(self, self.main_app, script_path, config=config)
             self.gui.grid(row=0, column=0, sticky='news', padx=10, pady=10)
 
 
