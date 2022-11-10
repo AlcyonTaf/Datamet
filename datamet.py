@@ -60,11 +60,13 @@ import os
 from pathlib import Path
 from datetime import datetime
 from configparser import ConfigParser
+from PIL import Image, ImageTk, ImageDraw, ImageFont
 
 import pandas as pd
 import numpy as np
 
 import main
+
 
 def find_session_by_qr_and_module(config, qrcode, module_name):
     """
@@ -78,7 +80,7 @@ def find_session_by_qr_and_module(config, qrcode, module_name):
     mesures_files = [file for file in Path(path_sessions).rglob('*Mesures.txt')]
     # On parcourt la liste des fichiers de mesures
     for file in mesures_files:
-        #print(file)
+        # print(file)
         # On lit le fichier de mesures
         mesures = Mesures()
         mesures.set_path(os.path.dirname(file))
@@ -92,6 +94,7 @@ def find_session_by_qr_and_module(config, qrcode, module_name):
 
     return finded_sessions
 
+
 def find_session_by_qr(config, qrcode):
     """
     Pour rechercher toutes les sessions datamet qui contiennent la valeur d'identification SAP provenant du QR Code
@@ -104,7 +107,7 @@ def find_session_by_qr(config, qrcode):
     mesures_files = [file for file in Path(path_sessions).rglob('*Mesures.txt')]
     # On parcourt la liste des fichiers de mesures
     for file in mesures_files:
-        #print(file)
+        # print(file)
         # On lit le fichier de mesures
         mesures = Mesures()
         mesures.set_path(os.path.dirname(file))
@@ -118,7 +121,72 @@ def find_session_by_qr(config, qrcode):
     return finded_sessions
 
 
+class ImagesDatamet(object):
+    """
+    Class pour la récupération des images
+    entre :
+        path_folder = dossier de la session métalia
+    sortie :
+        Dictionnaire avec en clef le nom du fichier, et en valeur le fichier au bon format pour afficher avec tk
+    """
 
+    def __init__(self):
+        self.path_folder = None
+        self.images = {}
+        self.images_annot = {}  # chaque clef du dict contient une liste avec l'image ([0]) et l'annotation ([1])
+        self.annots = {  # Todo voir pour mettre ceci dans un fichier de config
+            "Peau sup": "_1_1_1.tif",
+            "1/4": "_1_1_2.tif",
+            "Mi ep": "_1_1_3.tif",
+            "3/4": "_1_1_4.tif",
+            "Peau inf": "_1_1_5.tif"
+        }
+
+    def get_images(self, path_folder):
+        self.path_folder = path_folder
+        folders = os.listdir(self.path_folder)
+        founds_folder = [folder for folder in folders if folder.startswith("Images_Echelle_")]
+        if len(founds_folder) == 1:
+            images_path = [image for image in Path(os.path.join(self.path_folder, founds_folder[0])).rglob('*.tif')]
+            # print(images_path)
+            images_name = [os.path.basename(name) for name in images_path]
+            # print(images_name)
+
+            for image_path in images_path:
+                image_name = os.path.basename(image_path)
+                # Si on envoie l'image open cela ne fonctionne pas
+                image_open = Image.open(image_path)
+                # print(type(image_open))
+                self.images[image_name] = image_open
+                # print(type(self.images[image_name]))
+
+            # print(self.images)
+            # return self.images
+
+        else:
+            raise ValueError("Probleme : Plusieurs dossier images_echelles")
+
+    def annotation(self):
+        """
+        Pour ajouter les annotations ds positions sur les images
+        Si on a qu'une image, pas d'annotations, sinon il doit en avoir 5 + 1
+        """
+        if len(self.images) == 6:
+            # self.images_annot = self.images
+            # cas ou on a 6 images
+            # On chercher la valeur de la position dans les nom des images
+            for image_name in self.images:
+                for annot in self.annots:
+                    if image_name.endswith(self.annots[annot]):
+                        print(str(image_name) + " - " + str(self.annots[annot]))
+                        self.images_annot[image_name] = [self.images[image_name], annot]
+                        # On ajoute l'annotation sur l'image
+                        add_text = ImageDraw.Draw(self.images_annot[image_name][0])
+                        width, heigh = self.images_annot[image_name][0].size
+                        font = ImageFont.truetype('arial.ttf', size=50)
+                        add_text.text((10, heigh - 20), annot, fill=(255, 0, 0), anchor="ls", font=font)
+                        # print(self.images_annot)
+                        # self.images_annot[image_name][0].show()
 
 
 class DatametToSAP(object):
@@ -161,7 +229,6 @@ class DatametToSAP(object):
         now = datetime.now()
         now_sap = now.strftime("%Y%m%d%H%M%S%f")
         return now_sap
-
 
     def get_datamet_module(self):
         val = self.msr.get('General', 'Module')
@@ -277,7 +344,7 @@ class DatametToSAP(object):
         # On va filtrer df_SAP_fam en supprimer les para précédents
         lst_paras_quanti = list(df_SAP_ParaT['Paramètre'].values) + list(df_SAP_ZES_ParaV['Paramètre'].values)
         df_tmp = df_SAP_fam[~df_SAP_fam['Paramètre'].isin(lst_paras_quanti)]
-        #print(df_tmp)
+        # print(df_tmp)
         print("Traitement des parametres Qualitatif")
         if not df_tmp.empty:
             for index, row in df_tmp.iterrows():
@@ -291,12 +358,12 @@ class DatametToSAP(object):
                 para_lst = [int(val_parasap), "", val_datamet, "", 1, 1]
                 all_para_lst.append((self.set_para_dict(para_lst).copy()))
 
-
         print(all_para_lst)
 
     def test_essai(self):
         """ Test pour récupération des informations de l'essai et de l'eprouvette.
         Ces infos sont contenues dans le QR Code qui va devoir etre scanné"""
+
 
 class ConfigDatametSap:
     """
@@ -356,8 +423,6 @@ class Mesures(object):
         return valeur
 
 
-
-
 class Resultats:
     """
     Class pour la lecture des informations des fichiers "Resultats"
@@ -404,10 +469,10 @@ if __name__ == '__main__':
     # Mesures = ConfigParser()
     # Mesures.read(path)
     # print(Mesures.get('General', 'Module'))
-    test = Mesures()
-    test.set_path(path_mesures_folder=path)
-    test3 = test.get_sections()
-    print(test3)
+    # test = Mesures()
+    # test.set_path(path_mesures_folder=path)
+    # test3 = test.get_sections()
+    # print(test3)
     # #
     # for sections in test3:
     #     for section in sections:
@@ -436,6 +501,12 @@ if __name__ == '__main__':
 
     # test datamettosap
 
-    #test = DatametToSAP(path)
-    #test.current_time_sap()
+    # test = DatametToSAP(path)
+    # test.current_time_sap()
 
+    # Test class Images
+    test = ImagesDatamet()
+    imgs = test.get_images(
+        r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\CAMUS_C\AcquisitionImages_ESSAI STR-NORSOK_2022-10-21_10-14-32")
+
+    test.annotation()
