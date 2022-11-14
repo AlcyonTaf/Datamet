@@ -8,7 +8,8 @@
 """
 import tkinter
 import tkinter as tk
-from tkinter import Label, Entry, PhotoImage, Button, ttk
+from tkinter import Entry, PhotoImage, Button, ttk, Text
+from tkinter.ttk import Style, Label
 from PIL import Image, ImageTk
 
 import os
@@ -138,7 +139,7 @@ class NorksokResult(tk.Frame):
         self.lbl_frc_text = Label(self)
         self.lbl_frc_text.grid(row=1, column=0)
 
-        self.tree_frc = ttk.Treeview(self)
+        self.tree_frc = ttk.Treeview(self, selectmode="browse")
         self.tree_frc.column('#0', stretch=True, width=400)
         self.tree_frc.heading('#0', text='Liste des sessions', anchor='center')
         self.tree_frc.grid(row=2, column=0, sticky='nesw')
@@ -159,7 +160,7 @@ class NorksokResult(tk.Frame):
         self.lbl_str_text = Label(self)
         self.lbl_str_text.grid(row=5, column=0)
 
-        self.tree_str = ttk.Treeview(self)
+        self.tree_str = ttk.Treeview(self, selectmode="browse")
         self.tree_str.heading('#0', text='Liste des sessions', anchor='center')
         self.tree_str.grid(row=6, column=0, sticky='nesw')
         self.tree_str.bind("<<TreeviewSelect>>", self.on_select_tree_str_item)
@@ -285,6 +286,9 @@ class NorsokShowImage(tk.Toplevel):
 
         image = ImageTk.PhotoImage(image_pil)
 
+        # Essai d'enregistrement pour essai
+        # image_pil.save('testpillow.tif', compression="packbits", resolution=150)
+
         lbl = Label(self, image=image)
         lbl.image = image
         lbl.grid(row=0, column=0)
@@ -297,4 +301,77 @@ class NorsokTransfert(tk.Frame):
         self.parent = parent
         self.controller = controller
 
+        self.rowconfigure(0, weight=1)
+        self.rowconfigure(1, weight=1)
+        self.rowconfigure(2, weight=1)
+        self.rowconfigure(3, weight=1)
+        self.rowconfigure(4, weight=1)
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=1)
+        self.columnconfigure(2, weight=1)
 
+        # Partie FRC :
+        self.lbl_frc = Label(self, text="Essai FRC", font=('Ariel', 20))
+        self.lbl_frc.grid(row=0, column=0, columnspan=3)
+        self.valeurs_frc = Text(self)
+        self.valeurs_frc.grid(row=1, column=0)
+
+        # separateur
+        sep = ttk.Separator(self, orient="horizontal")
+        sep.grid(row=2, column=0, columnspan=2, sticky='ew', ipadx=200, pady=10)
+
+        sep_frc = ttk.Separator(self, orient="vertical")
+        sep_frc.grid(row=1, column=1, sticky='ns', ipady=200, padx=10)
+
+        sep_str = ttk.Separator(self, orient="vertical")
+        sep_str.grid(row=4, column=1, sticky='ns', ipady=200, padx=10)
+
+        # Partie STR :
+        self.lbl_str = Label(self, text="essai STR", font=('Ariel', 20))
+        self.lbl_str.grid(row=3, column=0, columnspan=3)
+        self.valeurs_str = Text(self)
+        self.valeurs_str.grid(row=4, column=0)
+
+        # Event a l'affichage
+        self.bind("<<ShowFrame>>", self.on_show_frame)
+
+
+    def on_show_frame(self, event):
+        # On va récupérer le chemin de l'essai FRC sélectionner sur la page NorsokResult
+        frc_tree_selected = self.controller.frames['norksok_result'].tree_frc.selection()
+        if len(frc_tree_selected) > 0:
+            frc_tree_id = frc_tree_selected[0]
+            frc_values = self.controller.frames['norksok_result'].tree_frc.item(frc_tree_id, "value")[0]
+            print(frc_values)
+            # On lance la mise en forme des résultats avec la class datamettosap
+            frc_to_sap = datamet.DatametToSAP(frc_values)
+            frc_to_sap_values = frc_to_sap.test_para()
+            print(frc_to_sap_values)
+            for value in frc_to_sap_values:
+                self.valeurs_frc.insert('end', str(value) + "\n")
+
+
+
+        # On va récupérer le chemin de l'essai FRC sélectionner sur la page NorsokResult
+        str_tree_selected = self.controller.frames['norksok_result'].tree_str.selection()
+        if len(str_tree_selected) > 0:
+            str_tree_id = str_tree_selected[0]
+            str_values = self.controller.frames['norksok_result'].tree_str.item(str_tree_id, "value")[0]
+            print(str_values)
+            # On lance la mise en forme des résultats avec la class datamettosap
+            str_to_sap = datamet.DatametToSAP(str_values)
+            str_to_sap_values = str_to_sap.test_para()
+            print(str_to_sap_values)
+            for value in str_to_sap_values:
+                self.valeurs_str.insert('end', str(value) + "\n")
+
+        # test récupération des images :
+        # Ok on va afficher une liste des images et le double clic permettra de les affichers
+        # Todo : Il faut trouver le moyen de mettre l'image pour l'essai FRC au bon endroit, comment filtrer ? Par la position ? ou par l'annotation?
+        test_images = self.controller.frames['norksok_result'].images
+        print('ici')
+
+
+        # if len(self.tree_frc.selection()) > 0:
+        #     ref_item = self.tree_frc.selection()[0]
+        #     item_values = self.tree_frc.item(ref_item, "value")[0]

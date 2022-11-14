@@ -65,6 +65,12 @@ from PIL import Image, ImageTk, ImageDraw, ImageFont
 import pandas as pd
 import numpy as np
 
+# Pour générer un Tiff à partir d'un PDF
+magick_home = ".\\ImageMagickDLL\\"
+os.environ["MAGICK_HOME"] = magick_home
+os.environ["MAGICK_CODER_MODULE_PATH"] = magick_home + os.sep + "modules" + os.sep + "coders"
+from wand.image import Image as ImageWand
+from wand.color import Color
 import main
 
 
@@ -126,7 +132,8 @@ class ImagesDatamet(object):
     Class pour la récupération et le traitement des images
     get_images : récupére les images et renvoie un dict avec le nom de l'image dans la clef, et le fichier image pil
     en valeur. Ceci est stocké dans la variable d'instances self.images
-    annotations :
+    annotations : Créer les annotations pour l'essai NORSOK.
+                    Il faudra peut etre la modifier pour prendre en compte d'autre annotation
     """
 
     def __init__(self):
@@ -192,7 +199,33 @@ class ImagesDatamet(object):
                 if not find:
                     self.images_annot[image_name] = [self.images[image_name], 'Image pour structure']
 
+    def conversion(self):
+        # Todo : Ne sera surement pas utile car apparent avec pillow je peux sauver dans le bon format
+        """ Conversion des PDF en TIFF"""
+        tiff_name = "test_conversion.tif"
+        # Il faut se remettre dans le dossier du script sinon Wand ne fonctionne pas
+        script_path = os.path.realpath(
+            os.path.join(os.getcwd(), os.path.dirname(__file__)))
+        os.chdir(script_path)
+        config = ConfigParser()
+        config.read('config.ini', encoding='utf-8')
 
+        path_export_tiff = config.get('Annexe', 'SaveXMLTiffFolder') + tiff_name
+
+        res = config.get('TIFF', 'Resolution')
+
+        tiff = ImageWand(filename=os.path.abspath('test'), resolution=200)
+        tiff.resize(1240, 1753)
+        tiff.format = 'tiff'
+        tiff.options['tiff:rows-per-strip'] = '4'
+        tiff.background_color = Color("white")
+        tiff.alpha_channel = 'remove'
+        tiff.type = config.get('TIFF', 'Type')
+        tiff.compression = config.get('TIFF', 'Compression')
+        tiff.resolution = [int(res), int(res)]
+
+        tiff.save(filename=os.path.abspath(path_export_tiff))
+        return tiff_name
 
 class DatametToSAP(object):
     """
@@ -204,17 +237,14 @@ class DatametToSAP(object):
     def __init__(self, path_folder_datamet, images=None):
         self.images = images
         # Lecture du fichier de résultat
-        try:
-            self.rst = Resultats()
-            self.rst.set_path(path_folder_datamet)
+        self.rst = Resultats()
+        if self.rst.set_path(path_folder_datamet):
             self.rst.read()
-            self.resutat_exist = True
-        except:
-            print('pas de fichier de résultats')
-            self.resutat_exist = False
+            self.df_results = self.rst.df_results
+        else:
+            self.df_results = []
 
         # Lecture du fichier de mesure
-        self.df_results = self.rst.df_results
         self.msr = Mesures()
         self.msr.set_path(path_folder_datamet)
 
@@ -287,11 +317,19 @@ class DatametToSAP(object):
 
         # On récupère la liste des paras pour cette famille
         df_SAP_fam = pd.read_excel(excel_config_file, sheet_name="ZCMT")
+        df_SAP_images = df_SAP_fam.copy()
         # On sélectionne uniquement la famille et les paras qui sont nécessaires
         df_SAP_fam = df_SAP_fam[(df_SAP_fam['Famille Essai'] == fam_sap) & (df_SAP_fam['Envoie SAP'] == 'Oui')]
         # On fait une liste des parametres pour ensuite filtré les autres df
         lst_paras = list(df_SAP_fam['Paramètre'].values)
         print(lst_paras)
+
+        # Cas particulier des images :
+        # On connait les para ou il faudra envoyer une image en annexe en ajoutant "images" dans la colonne "Envoie SAP"
+        df_SAP_images = df_SAP_images[(df_SAP_images['Famille Essai'] == fam_sap) &
+                                      (df_SAP_images['Envoie SAP'] == 'images')]
+        lst_paras_images = list(df_SAP_images['Paramètre'].values)
+
         # print(df_SAP_fam)
         # print(df_SAP_fam['Paramètre'].values)
 
@@ -310,12 +348,13 @@ class DatametToSAP(object):
         df_SAP_ParaT = df_SAP_ParaT[df_SAP_ParaT['Paramètre'].isin(lst_paras)]
         # print(df_SAP_ParaT)
 
+        #########################
+        # Parametres Qualitatif #
+        #########################
         # on parcourt les resultats => On cherche une correspondance dans ParaT avec la valeur Datamet pour récupérer
         # la valeur SAP
         # voir si ne peut pas etre fait avec le dataframe plutôt qu'itérer
         # On vérifie qu'on a bien des ParaT :
-        # Todo : Dans le cas ou il n'y a pas de fichier résultats, il faut chercher les info dans le fichier mesures si elle sont dispo
-        #  On rajoute une colonne dans le fichier excel pour savoir ou les trouver dans le fichier Mesures : Section,Valeur
         if not df_SAP_ParaT.empty:
             print("Traitement des parametres Qualitatif")
             # On filtre df_SAP_fam avec les parametres de df_SAP_ParaT et on itere
@@ -324,14 +363,33 @@ class DatametToSAP(object):
                 print("Traitement du para : " + str(row['Paramètre']) + " - " + str(row['Datamet résultat']))
                 # Colonne contenant la valeur a récupérer dans le df_results
                 val_parasap = row['Paramètre']
-                col_datamet = row['Datamet résultat']
                 # récupération de la valeur Datamet
-                val_datamet = self.df_results[col_datamet].item()
+                # Cas ou le fichier de résultat est présent :
+                # Todo : Actuellement ajout de try pour lever une exception si probleme,
+                #  mais ensuite il faudrait juste mettre un log puis continuer
+                if len(self.df_results) > 0:
+                    try:
+                        col_datamet = row['Datamet résultat']
+                        val_datamet = self.df_results[col_datamet].item()
+                    except:
+                        raise ValueError(" Probleme lors de la récupération du para qualitatif " + str(val_parasap) +
+                                         " dans le fichier Résultat.")
+                # Cas ou il n'y a pas de fichier de résultat :
+                else:
+                    # On regarde dans le tableau excel si ils sont disponibles dans le fichier de mesures :
+                    try:
+                        col_datamet = row['Datamet mesure'].split(',')
+                        val_datamet = self.msr.get(col_datamet[0], col_datamet[1])
+                    except:
+                        raise ValueError(" Probleme lors de la récupération du para qualitatif " + str(val_parasap) +
+                                         " dans le fichier Mesure.")
+
                 # On cherche dans le dataframe de résultats le parametres (nom de colonne) et ça valeur
                 # On compare ensuite avec la valeur dans df_SAP_ParaT qui sera transmise a SAP
                 # Gestion des ParaT qui doivent avoir un traitement particulier dans le programme
                 # Cas uniquement de la Date pour le moment.
-                if col_datamet == "Date":
+                # On regarde si col_datamet contient Date
+                if "Date" in col_datamet:
                     print("Gestion de la date")
                     print("date : " + val_datamet)
                     # Todo : Vérifier le format des dates dans le fichier datamet
@@ -355,12 +413,16 @@ class DatametToSAP(object):
                             print("Plusieurs valeurs trouvé, ce n'est pas normale")
                     else:
                         # Il est vide, donc on renvoie la valeur tel quel
-                        para_lst =[int(val_parasap), "", "", val_datamet, 1, 1]
+                        para_lst = [int(val_parasap), "", "", val_datamet, 1, 1]
                         all_para_lst.append(self.set_para_dict(para_lst).copy())
 
         # On cherche les ParaT qui sont des listes SAP
         # Todo : Faire traitement des para ZES_PARA_CND_V
 
+
+        #########################
+        # Paramètre Quantitatif #
+        #########################
         # On s'occupe des paras qui reste, normalement que des para quantitatif
         # On va filtrer df_SAP_fam en supprimer les para précédents
         lst_paras_quanti = list(df_SAP_ParaT['Paramètre'].values) + list(df_SAP_ZES_ParaV['Paramètre'].values)
@@ -372,20 +434,26 @@ class DatametToSAP(object):
                 print("Traitement du para : " + str(row['Paramètre']) + " - " + str(row['Datamet résultat']))
                 # Colonne contenant la valeur à récupérer dans le df_results
                 val_parasap = row['Paramètre']
-                col_datamet = row['Datamet résultat']
-                # récupération de la valeur Datamet
-                val_datamet = self.df_results[col_datamet].item()
-                print(val_datamet)
-                para_lst = [int(val_parasap), "", val_datamet, "", 1, 1]
-                all_para_lst.append((self.set_para_dict(para_lst).copy()))
+                try:
+                    col_datamet = row['Datamet résultat']
+                    # récupération de la valeur Datamet
+                    val_datamet = self.df_results[col_datamet].item()
+                    # print(val_datamet)
+                    para_lst = [int(val_parasap), "", val_datamet, "", 1, 1]
+                    all_para_lst.append((self.set_para_dict(para_lst).copy()))
+                except:
+                    raise ValueError("Erreur lors de la récupération du para quantitafif " + str(val_parasap) +
+                                     " dans le fichier Résultats")
 
         print(all_para_lst)
+        return all_para_lst
 
     def test_images(self, images):
         """
         Fonction pour récupérer les informations qui serviront a faire le XML des images
         """
         # On va chercher dans le tableau ZCMT les paras images a transmettre
+
     def test_essai(self):
         """ Test pour récupération des informations de l'essai et de l'eprouvette.
         Ces infos sont contenues dans le QR Code qui va devoir etre scanné"""
@@ -475,11 +543,15 @@ class Resultats:
         if len(files) == 1:
             self.path_resultats_file = os.path.join(path_mesures_folder, files[0])
             file_exist = os.path.exists(self.path_resultats_file)
-            if not file_exist:
-                self.path_resultats_file = None
-                raise ValueError('Aucun fichier de mesure trouvé')
+            # Todo : quel est l'intéret de vérifier si le fichier existe ici? => désactivté pour le moment
+            # if not file_exist:
+            #     self.path_resultats_file = None
+            #     raise ValueError('Aucun fichier de mesure trouvé')
+            # On retourne vrai si le fichier existe, sinon faux
+            return True
         else:
-            raise ValueError('Probleme lors de la recherche du fichier *Resultats.txt')
+            # raise ValueError('Probleme lors de la recherche du fichier *Resultats.txt')
+            return False
 
     def read(self):
         # path_result = r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\ISO 643_INT_277171_2022-06-07_10-59-04\277171_Resultats.txt"
@@ -489,7 +561,7 @@ class Resultats:
 
 if __name__ == '__main__':
     # test lecture fichier mesures
-    #path = r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\CAMUS_C\Fraction Phase_SEU_ESSAI FRC-NORSOK_2022-10-21_09-47-44"
+    # path = r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\CAMUS_C\Fraction Phase_SEU_ESSAI FRC-NORSOK_2022-10-21_09-47-44"
     # Test avec une aquisitiion qui ne contient pas de fichier résultats
     path = r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\CAMUS_C\AcquisitionImages_ESSAI STR-NORSOK_2022-10-21_10-14-32"
     # path = os.path.abspath(
