@@ -272,6 +272,7 @@ class NorksokResult(tk.Frame):
 
 
 class NorsokShowImage(tk.Toplevel):
+    # Todo a modifier pour qu'il soit appeller depuis la class ImageListAndPopup, peut surement etre intégrer dans la class ImageListAndPopup
     def __init__(self, main_app, parent, image_name):
         self.main_app = main_app
         self.parent = parent
@@ -316,6 +317,13 @@ class NorsokTransfert(tk.Frame):
         self.valeurs_frc = Text(self)
         self.valeurs_frc.grid(row=1, column=0)
 
+        # Todo : voir pour transformer ce treeview en class
+        # self.tree_frc = ttk.Treeview(self, columns=("Annotations"))
+        # self.tree_frc.heading('#0', text='Liste des images', anchor='center')
+        # self.tree_frc.heading('Annotations', text="Annotations", anchor='center')
+        # self.tree_frc.grid(row=4, column=1, rowspan=3, sticky='nesw')
+        # self.tree_frc.bind("<Double-1>", self.on_select_images_tree_str_item)
+
         # separateur
         sep = ttk.Separator(self, orient="horizontal")
         sep.grid(row=2, column=0, columnspan=2, sticky='ew', ipadx=200, pady=10)
@@ -337,6 +345,11 @@ class NorsokTransfert(tk.Frame):
 
 
     def on_show_frame(self, event):
+        # On récupére les images générer sur la frame result
+        # Ok on va afficher une liste des images et le double clic permettra de les affichers
+        # Todo : Il faut trouver le moyen de mettre l'image pour l'essai FRC au bon endroit, comment filtrer ? Par la position ? ou par l'annotation?
+        images_from_result = self.controller.frames['norksok_result'].images
+
         # On va récupérer le chemin de l'essai FRC sélectionner sur la page NorsokResult
         frc_tree_selected = self.controller.frames['norksok_result'].tree_frc.selection()
         if len(frc_tree_selected) > 0:
@@ -365,13 +378,45 @@ class NorsokTransfert(tk.Frame):
             for value in str_to_sap_values:
                 self.valeurs_str.insert('end', str(value) + "\n")
 
-        # test récupération des images :
-        # Ok on va afficher une liste des images et le double clic permettra de les affichers
-        # Todo : Il faut trouver le moyen de mettre l'image pour l'essai FRC au bon endroit, comment filtrer ? Par la position ? ou par l'annotation?
-        test_images = self.controller.frames['norksok_result'].images
-        print('ici')
+
 
 
         # if len(self.tree_frc.selection()) > 0:
         #     ref_item = self.tree_frc.selection()[0]
         #     item_values = self.tree_frc.item(ref_item, "value")[0]
+
+
+class ImagesListAndPopup(tk.Frame):
+    # Todo finir cette classe et remplacer les 2 treeview d'image par elle
+    # Todo voir si on ne peux pas intégrer showimage dedans
+    """
+    Class pour l'affichage d'un treeview avec une lsite d'image et annotation et un popup au doucle clic
+    """
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.parent = parent
+
+        self.rowconfigure(0, weight=1)
+        self.columnconfigure(0, weight=1)
+
+        self.tree = ttk.Treeview(self, columns=("Annotations"))
+        self.tree.heading('#0', text='Liste des images', anchor='center')
+        self.tree.heading('Annotations', text="Annotations", anchor='center')
+        self.tree.grid(row=0, column=0, sticky='nesw')
+        self.tree.bind("<Double-1>", self.on_select_images_tree_str_item)
+
+    def insert(self, images_list):
+        """
+        Pour insérer la liste des images
+        """
+        self.tree.delete(*self.tree.get_children())
+        for image_name in images_list:
+            self.tree.insert('', 'end', text=image_name, values=(images_list[image_name][1],))
+    def on_select_images_tree_str_item(self, event):
+        if len(self.images_tree_str.selection()) > 0:
+            ref_item = self.images_tree_str.selection()[0]
+            item_values = self.images_tree_str.item(ref_item, "text")
+            test = NorsokShowImage(self.controller, self, item_values)
+            test.grab_set()
+            print(item_values)
+            print(ref_item)
