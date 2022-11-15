@@ -33,6 +33,8 @@ class ImagesList(tk.Frame):
         if self.images:
             self.insert(self.images)
 
+    def delete(self):
+        self.tree.delete(*self.tree.get_children())
 
     def insert(self, images_list):
         """

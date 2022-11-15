@@ -225,7 +225,7 @@ class ResultByQR(tk.Toplevel):
         self.norme = norme
 
         # format de la fenêtre
-        # self.geometry('200x200')
+        #self.geometry('1092x944')
         self.title('Traitement des résultats par lot')
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)

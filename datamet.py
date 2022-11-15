@@ -140,7 +140,7 @@ class ImagesDatamet(object):
         self.path_folder = None
         self.images = {}
         self.images_annot = {}  # chaque clef du dict contient une liste avec l'image ([0]) et l'annotation ([1])
-        self.annots = {  # Todo voir pour mettre ceci dans un fichier de config
+        self.annots = {  # Todo voir pour mettre ceci dans un fichier de config et en même temps rajouter une ref a l'essai
             "Peau sup": "_1_1_1.tif",
             "1/4": "_1_1_2.tif",
             "Mi ep": "_1_1_3.tif",
