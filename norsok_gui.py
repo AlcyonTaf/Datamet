@@ -6,7 +6,6 @@
         https://stackoverflow.com/questions/7546050/switch-between-two-frames-in-tkinter
 
 """
-import tkinter
 import tkinter as tk
 from tkinter import Entry, PhotoImage, Button, ttk, Text
 from tkinter.ttk import Style, Label
@@ -17,6 +16,7 @@ import os
 # import fichier
 import datamet
 import mainV2
+import outils
 
 
 class NorsokGui(tk.Frame):
@@ -55,6 +55,7 @@ class NorsokGui(tk.Frame):
         frame = self.frames[page_name]
         frame.event_generate("<<ShowFrame>>")
         frame.grid(row=0, column=0, sticky='nesw')
+        self.parent.center_window()
 
 
 class NorsokBtn(tk.Frame):
@@ -165,11 +166,14 @@ class NorksokResult(tk.Frame):
         self.tree_str.grid(row=6, column=0, sticky='nesw')
         self.tree_str.bind("<<TreeviewSelect>>", self.on_select_tree_str_item)
 
-        self.images_tree_str = ttk.Treeview(self, columns=("Annotations"))
-        self.images_tree_str.heading('#0', text='Liste des images', anchor='center')
-        self.images_tree_str.heading('Annotations', text="Annotations", anchor='center')
+        # self.images_tree_str = ttk.Treeview(self, columns=("Annotations"))
+        # self.images_tree_str.heading('#0', text='Liste des images', anchor='center')
+        # self.images_tree_str.heading('Annotations', text="Annotations", anchor='center')
+        # self.images_tree_str.grid(row=4, column=1, rowspan=3, sticky='nesw')
+        # self.images_tree_str.bind("<Double-1>", self.on_select_images_tree_str_item)
+        # Test en utilisant une class
+        self.images_tree_str = outils.ImagesList(self, self.controller)
         self.images_tree_str.grid(row=4, column=1, rowspan=3, sticky='nesw')
-        self.images_tree_str.bind("<Double-1>", self.on_select_images_tree_str_item)
 
         # Event a l'affichage
         self.bind("<<ShowFrame>>", self.on_show_frame)
@@ -181,14 +185,14 @@ class NorksokResult(tk.Frame):
     def valider(self):
         self.controller.show_frame("norsok_transfert")
 
-    def on_select_images_tree_str_item(self, event):
-        if len(self.images_tree_str.selection()) > 0:
-            ref_item = self.images_tree_str.selection()[0]
-            item_values = self.images_tree_str.item(ref_item, "text")
-            test = NorsokShowImage(self.controller, self, item_values)
-            test.grab_set()
-            print(item_values)
-            print(ref_item)
+    # def on_select_images_tree_str_item(self, event):
+    #     if len(self.images_tree_str.selection()) > 0:
+    #         ref_item = self.images_tree_str.selection()[0]
+    #         item_values = self.images_tree_str.item(ref_item, "text")
+    #         test = NorsokShowImage(self.controller, self, item_values)
+    #         test.grab_set()
+    #         print(item_values)
+    #         print(ref_item)
 
     def on_select_tree_str_item(self, event):
         if len(self.tree_str.selection()) > 0:
@@ -202,9 +206,10 @@ class NorksokResult(tk.Frame):
                 self.images.annotation()
                 images_list = self.images.images_annot
 
-                self.images_tree_str.delete(*self.images_tree_str.get_children())
-                for image_name in images_list:
-                    self.images_tree_str.insert('', 'end', text=image_name, values=(images_list[image_name][1],))
+                # self.images_tree_str.delete(*self.images_tree_str.get_children())
+                # for image_name in images_list:
+                #     self.images_tree_str.insert('', 'end', text=image_name, values=(images_list[image_name][1],))
+                self.images_tree_str.insert(images_list)
 
     def on_select_tree_frc_item(self, event):
         if len(self.tree_frc.selection()) > 0:
@@ -271,28 +276,28 @@ class NorksokResult(tk.Frame):
                             self.tree_str.insert('', 'end', text=session_name, values=(session_path,))
 
 
-class NorsokShowImage(tk.Toplevel):
-    # Todo a modifier pour qu'il soit appeller depuis la class ImageListAndPopup, peut surement etre intégrer dans la class ImageListAndPopup
-    def __init__(self, main_app, parent, image_name):
-        self.main_app = main_app
-        self.parent = parent
-        super().__init__(main_app)
-        self.title("Affichage d'une image")
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-
-        image_pil = self.parent.images.images_annot[image_name][0]
-
-        image_pil.thumbnail((500, 500))
-
-        image = ImageTk.PhotoImage(image_pil)
-
-        # Essai d'enregistrement pour essai
-        # image_pil.save('testpillow.tif', compression="packbits", resolution=150)
-
-        lbl = Label(self, image=image)
-        lbl.image = image
-        lbl.grid(row=0, column=0)
+# class NorsokShowImage(tk.Toplevel):
+#     # Todo a modifier pour qu'il soit appeller depuis la class ImageListAndPopup, peut surement etre intégrer dans la class ImageListAndPopup
+#     def __init__(self, main_app, parent, image_name):
+#         self.main_app = main_app
+#         self.parent = parent
+#         super().__init__(main_app)
+#         self.title("Affichage d'une image")
+#         self.grid_rowconfigure(0, weight=1)
+#         self.grid_columnconfigure(0, weight=1)
+#
+#         image_pil = self.parent.images.images_annot[image_name][0]
+#
+#         image_pil.thumbnail((500, 500))
+#
+#         image = ImageTk.PhotoImage(image_pil)
+#
+#         # Essai d'enregistrement pour essai
+#         # image_pil.save('testpillow.tif', compression="packbits", resolution=150)
+#
+#         lbl = Label(self, image=image)
+#         lbl.image = image
+#         lbl.grid(row=0, column=0)
 
 
 class NorsokTransfert(tk.Frame):
@@ -316,17 +321,12 @@ class NorsokTransfert(tk.Frame):
         self.lbl_frc.grid(row=0, column=0, columnspan=3)
         self.valeurs_frc = Text(self)
         self.valeurs_frc.grid(row=1, column=0)
-
-        # Todo : voir pour transformer ce treeview en class
-        # self.tree_frc = ttk.Treeview(self, columns=("Annotations"))
-        # self.tree_frc.heading('#0', text='Liste des images', anchor='center')
-        # self.tree_frc.heading('Annotations', text="Annotations", anchor='center')
-        # self.tree_frc.grid(row=4, column=1, rowspan=3, sticky='nesw')
-        # self.tree_frc.bind("<Double-1>", self.on_select_images_tree_str_item)
+        self.tree_frc_images = outils.ImagesList(self, self.controller)
+        self.tree_frc_images.grid(row=1, column=2, sticky='nesw')
 
         # separateur
         sep = ttk.Separator(self, orient="horizontal")
-        sep.grid(row=2, column=0, columnspan=2, sticky='ew', ipadx=200, pady=10)
+        sep.grid(row=2, column=0, columnspan=3, sticky='ew', ipadx=200, pady=10)
 
         sep_frc = ttk.Separator(self, orient="vertical")
         sep_frc.grid(row=1, column=1, sticky='ns', ipady=200, padx=10)
@@ -339,6 +339,8 @@ class NorsokTransfert(tk.Frame):
         self.lbl_str.grid(row=3, column=0, columnspan=3)
         self.valeurs_str = Text(self)
         self.valeurs_str.grid(row=4, column=0)
+        self.tree_str_images = outils.ImagesList(self, self.controller)
+        self.tree_str_images.grid(row=4, column=2, sticky='nesw')
 
         # Event a l'affichage
         self.bind("<<ShowFrame>>", self.on_show_frame)
@@ -386,37 +388,37 @@ class NorsokTransfert(tk.Frame):
         #     item_values = self.tree_frc.item(ref_item, "value")[0]
 
 
-class ImagesListAndPopup(tk.Frame):
-    # Todo finir cette classe et remplacer les 2 treeview d'image par elle
-    # Todo voir si on ne peux pas intégrer showimage dedans
-    """
-    Class pour l'affichage d'un treeview avec une lsite d'image et annotation et un popup au doucle clic
-    """
-    def __init__(self, parent):
-        super().__init__(parent)
-        self.parent = parent
-
-        self.rowconfigure(0, weight=1)
-        self.columnconfigure(0, weight=1)
-
-        self.tree = ttk.Treeview(self, columns=("Annotations"))
-        self.tree.heading('#0', text='Liste des images', anchor='center')
-        self.tree.heading('Annotations', text="Annotations", anchor='center')
-        self.tree.grid(row=0, column=0, sticky='nesw')
-        self.tree.bind("<Double-1>", self.on_select_images_tree_str_item)
-
-    def insert(self, images_list):
-        """
-        Pour insérer la liste des images
-        """
-        self.tree.delete(*self.tree.get_children())
-        for image_name in images_list:
-            self.tree.insert('', 'end', text=image_name, values=(images_list[image_name][1],))
-    def on_select_images_tree_str_item(self, event):
-        if len(self.images_tree_str.selection()) > 0:
-            ref_item = self.images_tree_str.selection()[0]
-            item_values = self.images_tree_str.item(ref_item, "text")
-            test = NorsokShowImage(self.controller, self, item_values)
-            test.grab_set()
-            print(item_values)
-            print(ref_item)
+# class ImagesListAndPopup(tk.Frame):
+#     # Todo finir cette classe et remplacer les 2 treeview d'image par elle
+#     # Todo voir si on ne peux pas intégrer showimage dedans
+#     """
+#     Class pour l'affichage d'un treeview avec une lsite d'image et annotation et un popup au doucle clic
+#     """
+#     def __init__(self, parent):
+#         super().__init__(parent)
+#         self.parent = parent
+#
+#         self.rowconfigure(0, weight=1)
+#         self.columnconfigure(0, weight=1)
+#
+#         self.tree = ttk.Treeview(self, columns=("Annotations"))
+#         self.tree.heading('#0', text='Liste des images', anchor='center')
+#         self.tree.heading('Annotations', text="Annotations", anchor='center')
+#         self.tree.grid(row=0, column=0, sticky='nesw')
+#         self.tree.bind("<Double-1>", self.on_select_images_tree_str_item)
+#
+#     def insert(self, images_list):
+#         """
+#         Pour insérer la liste des images
+#         """
+#         self.tree.delete(*self.tree.get_children())
+#         for image_name in images_list:
+#             self.tree.insert('', 'end', text=image_name, values=(images_list[image_name][1],))
+#     def on_select_images_tree_str_item(self, event):
+#         if len(self.images_tree_str.selection()) > 0:
+#             ref_item = self.images_tree_str.selection()[0]
+#             item_values = self.images_tree_str.item(ref_item, "text")
+#             test = NorsokShowImage(self.controller, self, item_values)
+#             test.grab_set()
+#             print(item_values)
+#             print(ref_item)

@@ -78,7 +78,7 @@ class FolderTree(tk.Frame):
         ysb = ttk.Scrollbar(self, orient='vertical', command=self.tree.yview)
         xsb = ttk.Scrollbar(self, orient='horizontal', command=self.tree.xview)
         self.tree.configure(yscroll=ysb.set, xscroll=xsb.set)
-        #self.tree.column('folder_list', stretch=True, width=300)
+        # self.tree.column('folder_list', stretch=True, width=300)
         self.tree.heading('#0', text='Liste dossier', anchor='w')
 
         self.tree.grid(row=0, column=0, sticky="nsew")
@@ -89,7 +89,7 @@ class FolderTree(tk.Frame):
         # Treeview event click => Pour affichage des info dans détails
         self.tree.bind("<<TreeviewSelect>>", self.on_select_tree_item)
         # Treeview event click droit => pour affichage popup menu : Désactivé pour le moment
-        #self.tree.bind("<Button-3>", self.show_popup_menu)
+        # self.tree.bind("<Button-3>", self.show_popup_menu)
 
         # remplissage de la tree view avec les données
         abspath = os.path.abspath(folderpath)
@@ -105,8 +105,7 @@ class FolderTree(tk.Frame):
             paths = sorted(os.listdir(abspath), key=lambda f: -os.path.getmtime(os.path.join(abspath, f)))
             user_folder[p] = paths
             for f in paths:
-                self.tree.insert(oid, 'end', text=f, open=False, values=(p,f,))
-
+                self.tree.insert(oid, 'end', text=f, open=False, values=(p, f,))
 
         # TODO : voir pour reprendre le fonctionnement de cette fonction pour faire un trie :
         # def get_result_date_list():
@@ -159,8 +158,6 @@ class FolderTree(tk.Frame):
                         details_resultats.insert('end', '\n' + str(df_resultats.iloc[0]))
 
 
-
-
 class MainApplication(tk.Frame):
     def __init__(self, parent, *args, **kwargs):
         tk.Frame.__init__(self, parent, bg="red", *args, **kwargs)
@@ -172,7 +169,7 @@ class MainApplication(tk.Frame):
         self.grid_columnconfigure(2, weight=1)
 
         # Treeview des dossiers
-        #path = os.path.abspath("C:\\Nobackup\\Dev Informatique\\GitHub Clone\\Datamet\Exemple résultat")
+        # path = os.path.abspath("C:\\Nobackup\\Dev Informatique\\GitHub Clone\\Datamet\Exemple résultat")
         # path = os.path.abspath("E:\\Romain\\Documents\\Romain bidouille\\Informatique\\Taf\\Datamet\\Exemple résultat")
         path = config.get('datamet', 'FolderResult')
         self.folder_tree = FolderTree(self, parent, path)
@@ -185,7 +182,6 @@ class MainApplication(tk.Frame):
         # Pour afficher le détails du fichier Résutlats
         self.details_resultats = Details(self, parent)
         self.details_resultats.grid(row=0, column=2, sticky='news')
-
 
         # self.test_result_list = TestResultList(self)
         # self.test_result_list.grid(row=0, column=1, sticky='news')
@@ -210,7 +206,6 @@ class MenuMain(tk.Menu):
         self.file_menu.add_command(label="Exit", underline=3, command=parent.destroy)
 
         if parent.__class__.__name__ == "App":
-
             # Menu Filtre
             self.filtre_menu = tk.Menu(self, tearoff=False)
             self.add_cascade(label='Traitement par lot', underline=0, menu=self.filtre_menu)
@@ -223,14 +218,14 @@ class ResultByQR(tk.Toplevel):
     """
 
     """
+
     def __init__(self, main_app, norme):
         self.main_app = main_app
         super().__init__(main_app)
         self.norme = norme
 
-
         # format de la fenêtre
-        #self.geometry('200x200')
+        # self.geometry('200x200')
         self.title('Traitement des résultats par lot')
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
@@ -241,12 +236,25 @@ class ResultByQR(tk.Toplevel):
 
         # Gestion de l'affichage de la frame en fonction de la norme :
         if self.norme == "Norsok":
-            #self.gui = Norsok_Gui(self, self.main_app)
+            # self.gui = Norsok_Gui(self, self.main_app)
             self.gui = norsok_gui.NorsokGui(self, self.main_app, script_path, config=config)
             self.gui.grid(row=0, column=0, sticky='news', padx=10, pady=10)
 
+        self.center_window()
 
+    def center_window(self):
+        self.update()
+        windows_width = self.winfo_width()
+        windows_height = self.winfo_height()
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        print("Windows : " + str(windows_width) + " - " + str(windows_height))
+        print("screen : " + str(screen_width) + " - " + str(screen_height))
 
+        center_x = int(screen_width / 2 - windows_width / 2)
+        center_y = int(screen_height / 2 - windows_height / 2) - 40  # - 60 pour tenir compte de la barre windows
+
+        self.geometry(f'+{center_x}+{center_y}')
 
         # Menu déroulant pour choix de l'interface
         # options = ["Norsok"]
@@ -259,7 +267,6 @@ class ResultByQR(tk.Toplevel):
     #     if value == "Norsok":
     #         self.gui = Norsok_Gui(self, self.main_app)
     #         self.gui.grid(row=1, column=0, sticky='news')
-
 
 
 # class Norsok_Gui(tk.Frame):
@@ -312,16 +319,13 @@ class ResultByQR(tk.Toplevel):
 #         print(sdfs)
 
 
-
-
-
 class App(tk.Tk):
     """
     Class principal de Tk
     """
 
     def __init__(self):
-        #tk.Tk.__init__(self)
+        # tk.Tk.__init__(self)
         super().__init__()
         self.menubar = MenuMain(self)
         self.config(menu=self.menubar)
@@ -361,9 +365,6 @@ class App(tk.Tk):
             print("Destuction de resultbyQR")
             self.top_resultbyqr = None
 
-
-
-
     # afficher les erreurs
     # Todo : a reactiver
     # def report_callback_exception(self, exc, val, tb):
@@ -385,15 +386,10 @@ if __name__ == '__main__':
         showerror("Error", message="Le fichier config.ini n'est pas présent.")
         # quit()
 
-
-
-
-
     # path = r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\ISO 643_INT_277171_2022-06-07_10-59-04\277171_Mesures.txt"
     # test = resultats.Mesures()
     # test.set_path(path)
     # print(test.get_sections())
-
 
     # test lecture fichier mesures
     # path = os.path.abspath(
