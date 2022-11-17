@@ -408,11 +408,11 @@ class NorsokTransfert(tk.Frame):
             # On cherche l'image pour l'essai FRC car on la annoter "Image pour structure"
             if images_from_result[image][1] == "Image pour structure":
                 # Image de l'essai FRC
-                images_frc[image] = images_from_result[image]
+                images_str[image] = images_from_result[image]
 
             else:
                 # Images de l'essai STR
-                images_str[image] = images_from_result[image]
+                images_frc[image] = images_from_result[image]
 
         self.tree_frc_images.insert(images_frc)
         self.tree_str_images.insert(images_str)

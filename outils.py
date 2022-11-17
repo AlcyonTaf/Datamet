@@ -71,7 +71,7 @@ class ShowImage(tk.Toplevel):
 
         image = ImageTk.PhotoImage(image_pil)
 
-        # Essai d'enregistrement pour essai
+        # Essai d'enregistrement pour essai => Cela fonctionne!!!
         # image_pil.save('testpillow.tif', compression="packbits", resolution=150)
 
         lbl = Label(self, image=image)

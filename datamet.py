@@ -140,7 +140,8 @@ class ImagesDatamet(object):
         self.path_folder = None
         self.images = {}
         self.images_annot = {}  # chaque clef du dict contient une liste avec l'image ([0]) et l'annotation ([1])
-        self.annots = {  # Todo voir pour mettre ceci dans un fichier de config et en même temps rajouter une ref a l'essai
+        self.annots = {
+            # Todo voir pour mettre ceci dans un fichier de config et en même temps rajouter une ref a l'essai
             "Peau sup": "_1_1_1.tif",
             "1/4": "_1_1_2.tif",
             "Mi ep": "_1_1_3.tif",
@@ -227,10 +228,12 @@ class ImagesDatamet(object):
         tiff.save(filename=os.path.abspath(path_export_tiff))
         return tiff_name
 
+
 class DatametToSAP(object):
     """
     Class qui va récupérer et mettre en forme les résultats des mesures pour les transmettres a la class SAPXml
-    entrée : dossier de la session et les images éventuelles
+    entrée : dossier de la session, si il y a des images il faut les transferer en argument
+    # Todo : gere le fait si des images en argument, il faut faire le traitement iamges, sinon on ne le fait pas
 
     """
 
@@ -265,6 +268,35 @@ class DatametToSAP(object):
                          "./SequenceResult": "ValeurSequenceResult",
                          "./SequenceEssEpr": "ValeurSequenceEssEpr"}
 
+        # Récupération des infos du fichier excel de config
+        # Todo : a finir, on va récupérer toutes les infos sur la config des essais/paras a l'initialisation de l'instance
+        # On récupére le différent tableau dans le fichier excel et on les stocks dans des df
+        config = ConfigParser()
+        config.read('config.ini', encoding='utf-8')
+        excel_config_file = config.get('datametToSAP', 'ExcelConfig')
+        # Tableau de correspondance entre Famille d'essai SAP et les méthodes de datamet
+        self.df_datamet_fam = pd.read_excel(excel_config_file, sheet_name="Famille-methode")
+        # Tableau regroupant toutes les familles, paras et info pour savoir quoi récupérer et ou
+        self.df_SAP_fam = pd.read_excel(excel_config_file, sheet_name="ZCMT")
+        # On récupère la liste des ZES_PARA_CND_V pour cette famille
+        # il s'agit des valeurs pour les listes de choix dans SAP. Elle va dans la balise ValueParaT
+        self.df_SAP_ZES_ParaV = pd.read_excel(excel_config_file, sheet_name="ZES_PARA_CND_V")
+        # On récupère la liste de ParaT qui ne sont pas des liste de choix
+        # => parametres Qualitatif, par exemple opérateur ou Date
+        # Dans la balise ValueParaT
+        self.df_SAP_ParaT = pd.read_excel(excel_config_file, sheet_name="ParaT")
+
+        # récupération du module
+        self.module_datamet = self.get_datamet_module()
+        print(self.module_datamet)
+
+        # Il va falloir chercher la famille SAP en fonction du module datamet
+        # on cherche le module pour trouver la famille
+        self.fam_sap = self.df_datamet_fam.loc[
+            self.df_datamet_fam['Méthode Datamet'] == self.module_datamet, 'Famille SAP'].item()
+        # print(fam_sap)
+
+
     @staticmethod
     def current_time_sap():
         """ Pour renvoyer la date et l'heure au format sap"""
@@ -293,59 +325,29 @@ class DatametToSAP(object):
         Fonction dans le cas particulier des essais Norsok :
             Il faut transférer des images d'un essai STR dans un para de l'essai FRC
         """
+        # Todo ne sera surement pas util
 
     def test_para(self):
-        # todo : comme il y a beaucoup de para qui ne sont pas transmis, on rajoute une colonne pour savoir ceux a
-        #  transmettre
-
         # Test : on init une liste des para
         all_para_lst = []
 
-        # récupération du module
-        module_datamet = self.get_datamet_module()
-        print(module_datamet)
-
-        # Il va falloir chercher la famille SAP en fonction du module datamet
-        # on utilise le fichier excel
-        config = ConfigParser()
-        config.read('config.ini', encoding='utf-8')
-        excel_config_file = config.get('datametToSAP', 'ExcelConfig')
-        df_datamet_fam = pd.read_excel(excel_config_file, sheet_name="Famille-methode")
-        # on cherche le module pour trouver la famille
-        fam_sap = df_datamet_fam.loc[df_datamet_fam['Méthode Datamet'] == module_datamet, 'Famille SAP'].item()
-        # print(fam_sap)
-
-        # On récupère la liste des paras pour cette famille
-        df_SAP_fam = pd.read_excel(excel_config_file, sheet_name="ZCMT")
-        df_SAP_images = df_SAP_fam.copy()
         # On sélectionne uniquement la famille et les paras qui sont nécessaires
-        df_SAP_fam = df_SAP_fam[(df_SAP_fam['Famille Essai'] == fam_sap) & (df_SAP_fam['Envoie SAP'] == 'Oui')]
+        df_SAP_fam = self.df_SAP_fam[
+            (self.df_SAP_fam['Famille Essai'] == self.fam_sap) & (self.df_SAP_fam['Envoie SAP'] == 'Oui')]
         # On fait une liste des parametres pour ensuite filtré les autres df
         lst_paras = list(df_SAP_fam['Paramètre'].values)
         print(lst_paras)
 
-        # Cas particulier des images :
-        # On connait les para ou il faudra envoyer une image en annexe en ajoutant "images" dans la colonne "Envoie SAP"
-        df_SAP_images = df_SAP_images[(df_SAP_images['Famille Essai'] == fam_sap) &
-                                      (df_SAP_images['Envoie SAP'] == 'images')]
-        lst_paras_images = list(df_SAP_images['Paramètre'].values)
-
-        # print(df_SAP_fam)
-        # print(df_SAP_fam['Paramètre'].values)
-
         # On récupère la liste des ZES_PARA_CND_V pour cette famille
-        # il s'agit des valeurs pour les listes de choix dans SAP. Elle va dans la balise ValueParaT
-        df_SAP_ZES_ParaV = pd.read_excel(excel_config_file, sheet_name="ZES_PARA_CND_V")
         # sélection de la famille en cours et des paras qui sont nécessaires
-        df_SAP_ZES_ParaV = df_SAP_ZES_ParaV[(df_SAP_ZES_ParaV['Famille Essai'] == fam_sap)]
+        df_SAP_ZES_ParaV = self.df_SAP_ZES_ParaV[(self.df_SAP_ZES_ParaV['Famille Essai'] == self.fam_sap)]
         df_SAP_ZES_ParaV = df_SAP_ZES_ParaV[df_SAP_ZES_ParaV['Paramètre'].isin(lst_paras)]
         # print(df_SAP_ZES_ParaV)
 
         # On récupère la liste de ParaT qui ne sont pas des liste de choix
         # => parametres Qualitatif, par exemple opérateur ou Date
         # Dans la balise ValueParaT
-        df_SAP_ParaT = pd.read_excel(excel_config_file, sheet_name="ParaT")
-        df_SAP_ParaT = df_SAP_ParaT[df_SAP_ParaT['Paramètre'].isin(lst_paras)]
+        df_SAP_ParaT = self.df_SAP_ParaT[self.df_SAP_ParaT['Paramètre'].isin(lst_paras)]
         # print(df_SAP_ParaT)
 
         #########################
@@ -419,7 +421,6 @@ class DatametToSAP(object):
         # On cherche les ParaT qui sont des listes SAP
         # Todo : Faire traitement des para ZES_PARA_CND_V
 
-
         #########################
         # Paramètre Quantitatif #
         #########################
@@ -448,11 +449,19 @@ class DatametToSAP(object):
         print(all_para_lst)
         return all_para_lst
 
-    def test_images(self, images):
+    def test_images(self):
         """
         Fonction pour récupérer les informations qui serviront a faire le XML des images
         """
+        # Todo : pour enregistré les images utiliser ceci: image_pil.save('testpillow.tif', compression="packbits", resolution=150)
+
         # On va chercher dans le tableau ZCMT les paras images a transmettre
+        # Cas particulier des images :
+        # On connait les para ou il faudra envoyer une image en annexe en ajoutant "images" dans la colonne "Envoie SAP"
+        df_SAP_images = self.df_SAP_fam[(self.df_SAP_fam['Famille Essai'] == self.fam_sap) &
+                                        (self.df_SAP_fam['Envoie SAP'] == 'images')]
+        lst_paras_images = list(df_SAP_images['Paramètre'].values)
+        print(lst_paras_images)
 
     def test_essai(self):
         """ Test pour récupération des informations de l'essai et de l'eprouvette.
@@ -602,7 +611,7 @@ if __name__ == '__main__':
     # test datamettosap
 
     test = DatametToSAP(path)
-    test.test_para()
+    test.test_images()
     # test.current_time_sap()
 
     # Test class Images
