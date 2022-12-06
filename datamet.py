@@ -65,6 +65,8 @@ from PIL import Image, ImageTk, ImageDraw, ImageFont
 import pandas as pd
 import numpy as np
 
+import sapxml
+
 # Pour générer un Tiff à partir d'un PDF
 magick_home = ".\\ImageMagickDLL\\"
 os.environ["MAGICK_HOME"] = magick_home
@@ -73,10 +75,13 @@ from wand.image import Image as ImageWand
 from wand.color import Color
 import main
 
+from sapxml import SapXml
+
 
 def find_session_by_qr_and_module(config, qrcode, module_name):
     """
     Pour rechercher toutes les sessions datamet qui contiennent la valeur d'identification SAP provenant du QR Code et le module
+    Fait pour le cas de Norsok, on on a plusieur essais différent
     Todo :
     """
     # print('test')
@@ -93,6 +98,12 @@ def find_session_by_qr_and_module(config, qrcode, module_name):
         # récupération de la valeur du QR Code
         # print(mesures.get(section='Echantillon1', para='Commentaire'))
         qr_session = mesures.get(section='Echantillon1', para='Commentaire')
+        # Transformation du QR_Code et du qr_session pour comparaison
+        # On va vérifier seulement les 4 1er valeur du QR Code pour retrouver avec un seul scan tous les essais
+        # Commande;Poste;Um;SequenceLoc
+        # Si cela retourne trop de valeur, il faudrat mettre 2 scan de QR code pour Norsok
+        qr_session = "".join(qr_session.split(';')[0:4])
+        qrcode = "".join(qrcode.split(';')[0:4])
         module_session = mesures.get(section='General', para='Module')
         if qr_session == qrcode and module_session == module_name:
             print("trouvé")
@@ -104,7 +115,8 @@ def find_session_by_qr_and_module(config, qrcode, module_name):
 def find_session_by_qr(config, qrcode):
     """
     Pour rechercher toutes les sessions datamet qui contiennent la valeur d'identification SAP provenant du QR Code
-    Todo :
+    Ici on utilise le QR Code complet qui contient également l'information sur le type d'essai, il faudra en déduire le MODULE
+    Todo : a Finir
     """
     # print('test')
     path_sessions = config.get('datamet', 'FolderResult')
@@ -231,26 +243,21 @@ class ImagesDatamet(object):
 
 class DatametToSAP(object):
     """
-    Class qui va récupérer et mettre en forme les résultats des mesures pour les transmettres a la class SAPXml
-    entrée : dossier de la session, si il y a des images il faut les transferer en argument
-    # Todo : gere le fait si des images en argument, il faut faire le traitement iamges, sinon on ne le fait pas
-
+    Class qui va récupérer et mettre en forme les résultats des mesures pour les transmettres a la class SAPXml.
+    Il faut appeler set_path avec le chemin de la session et éventuellement les images.
+    On récupère ensuite la liste à transmettre a SAPXml avec get_all
     """
 
-    def __init__(self, path_folder_datamet, images=None):
-        self.images = images
-        # Lecture du fichier de résultat
-        self.rst = Resultats()
-        if self.rst.set_path(path_folder_datamet):
-            self.rst.read()
-            self.df_results = self.rst.df_results
-        else:
-            self.df_results = []
+    def __init__(self):
+        self.fam_sap = None
+        self.module_datamet = None
+        self.msr = None
+        self.qr = None
+        self.df_results = None
+        self.rst = None
+        self.images = None
 
-        # Lecture du fichier de mesure
-        self.msr = Mesures()
-        self.msr.set_path(path_folder_datamet)
-
+        # Définition des templates
         self.ToSap = ""
         self.essai_tpl = {"ESSAI": {"./__Essai/Source": "",
                                     "./__Essai/TimeStamp": "",
@@ -286,9 +293,27 @@ class DatametToSAP(object):
         # Dans la balise ValueParaT
         self.df_SAP_ParaT = pd.read_excel(excel_config_file, sheet_name="ParaT")
 
+
+    def set_path(self, path_folder_datamet, images=None):
+        self.images = images
+        # Lecture du fichier de résultat
+        self.rst = Resultats()
+        if self.rst.set_path(path_folder_datamet):
+            self.rst.read()
+            self.df_results = self.rst.df_results
+        else:
+            self.df_results = []
+
+        # Lecture du fichier de mesure
+        self.msr = Mesures()
+        self.msr.set_path(path_folder_datamet)
+
+        # Récupération du QR CODE :
+        self.qr = self.get_qrcode_value()
+
         # récupération du module
         self.module_datamet = self.get_datamet_module()
-        print(self.module_datamet)
+        # print(self.module_datamet)
 
         # Il va falloir chercher la famille SAP en fonction du module datamet
         # on cherche le module pour trouver la famille
@@ -296,6 +321,19 @@ class DatametToSAP(object):
             self.df_datamet_fam['Méthode Datamet'] == self.module_datamet, 'Famille SAP'].item()
         # print(fam_sap)
 
+    def get_all(self):
+        # On récupère et on assemble les différentes parties : Essai => Eprouvette => Parametre
+        essai = self.get_essai()
+        epr = self.get_epr()
+        paras = self.get_para()
+
+        epr['Parametres'] = paras
+        essai['Eprouvettes'].append(epr)
+
+        essais = []
+        essais.append(essai)
+
+        return essais
 
     @staticmethod
     def current_time_sap():
@@ -307,6 +345,34 @@ class DatametToSAP(object):
     def get_datamet_module(self):
         val = self.msr.get('General', 'Module')
         return val
+
+    def get_qrcode_value(self):
+        val = self.msr.get(section='Echantillon1', para='Commentaire')
+        return val
+
+    def set_epr_dict(self, epr_lst):
+        """ permet de créer le dict depuis une liste des informations de l'eprouvette dans cet ordre  :
+            SeqEssais"""
+
+        epr_tmp = self.epr_tpl
+        x = 0
+        for key in epr_tmp['EPROUVETTE']:
+            epr_tmp['EPROUVETTE'][key] = epr_lst[x]
+            x += 1
+
+        return epr_tmp
+
+    def set_essai_dict(self, essai_lst):
+        """ permet de créer le dict depuis une liste des informations de l'essai dans cet ordre  :
+            Source, TimeStamp, NoCommande, NoPoste, Batch, SequenceLoc"""
+
+        essai_tmp = self.essai_tpl
+        x = 0
+        for key in essai_tmp['ESSAI']:
+            essai_tmp['ESSAI'][key] = essai_lst[x]
+            x += 1
+
+        return essai_tmp
 
     def set_para_dict(self, para_lst):
         """ permet de créer le dict depuis un liste de para dans un ordre définit :
@@ -327,7 +393,7 @@ class DatametToSAP(object):
         """
         # Todo ne sera surement pas util
 
-    def test_para(self):
+    def get_para(self):
         # Test : on init une liste des para
         all_para_lst = []
 
@@ -336,7 +402,7 @@ class DatametToSAP(object):
             (self.df_SAP_fam['Famille Essai'] == self.fam_sap) & (self.df_SAP_fam['Envoie SAP'] == 'Oui')]
         # On fait une liste des parametres pour ensuite filtré les autres df
         lst_paras = list(df_SAP_fam['Paramètre'].values)
-        print(lst_paras)
+        # print(lst_paras)
 
         # On récupère la liste des ZES_PARA_CND_V pour cette famille
         # sélection de la famille en cours et des paras qui sont nécessaires
@@ -358,11 +424,11 @@ class DatametToSAP(object):
         # voir si ne peut pas etre fait avec le dataframe plutôt qu'itérer
         # On vérifie qu'on a bien des ParaT :
         if not df_SAP_ParaT.empty:
-            print("Traitement des parametres Qualitatif")
+            # print("Traitement des parametres Qualitatif")
             # On filtre df_SAP_fam avec les parametres de df_SAP_ParaT et on itere
             df_tmp = df_SAP_fam[df_SAP_fam['Paramètre'].isin(list(df_SAP_ParaT['Paramètre'].values))]
             for index, row in df_tmp.iterrows():
-                print("Traitement du para : " + str(row['Paramètre']) + " - " + str(row['Datamet résultat']))
+                # print("Traitement du para : " + str(row['Paramètre']) + " - " + str(row['Datamet résultat']))
                 # Colonne contenant la valeur a récupérer dans le df_results
                 val_parasap = row['Paramètre']
                 # récupération de la valeur Datamet
@@ -392,8 +458,8 @@ class DatametToSAP(object):
                 # Cas uniquement de la Date pour le moment.
                 # On regarde si col_datamet contient Date
                 if "Date" in col_datamet:
-                    print("Gestion de la date")
-                    print("date : " + val_datamet)
+                    # print("Gestion de la date")
+                    # print("date : " + val_datamet)
                     # Todo : Vérifier le format des dates dans le fichier datamet
                     date_essai = datetime.strptime(val_datamet, "%Y/%m/%d %H:%M:%S")
                     # Il faut la transformer dans le format SAP YYYYMMDDHHMMSS
@@ -403,12 +469,12 @@ class DatametToSAP(object):
 
                 else:
                     # On cherche dans df_SAP_ParaT la valeur datamet pour retourner la valeur SAP
-                    print("On cherche : " + val_datamet)
+                    # print("On cherche : " + val_datamet)
                     df_query = df_SAP_ParaT.query('`Valeur Datamet` == "' + val_datamet + '"')
                     # on vérifie qu'on ne trouve qu'une valeur
                     if not df_query.empty:
                         if len(df_query.index) == 1:
-                            print("Valeur a transmettre a SAP : " + df_query['Valeur SAP'].item())
+                            # print("Valeur a transmettre a SAP : " + df_query['Valeur SAP'].item())
                             para_lst = [int(val_parasap), "", "", df_query['Valeur SAP'].item(), 1, 1]
                             all_para_lst.append(self.set_para_dict(para_lst).copy())
                         else:
@@ -429,10 +495,10 @@ class DatametToSAP(object):
         lst_paras_quanti = list(df_SAP_ParaT['Paramètre'].values) + list(df_SAP_ZES_ParaV['Paramètre'].values)
         df_tmp = df_SAP_fam[~df_SAP_fam['Paramètre'].isin(lst_paras_quanti)]
         # print(df_tmp)
-        print("Traitement des parametres Qualitatif")
+        # print("Traitement des parametres Qualitatif")
         if not df_tmp.empty:
             for index, row in df_tmp.iterrows():
-                print("Traitement du para : " + str(row['Paramètre']) + " - " + str(row['Datamet résultat']))
+                # print("Traitement du para : " + str(row['Paramètre']) + " - " + str(row['Datamet résultat']))
                 # Colonne contenant la valeur à récupérer dans le df_results
                 val_parasap = row['Paramètre']
                 try:
@@ -446,10 +512,10 @@ class DatametToSAP(object):
                     raise ValueError("Erreur lors de la récupération du para quantitafif " + str(val_parasap) +
                                      " dans le fichier Résultats")
 
-        print(all_para_lst)
+        # print(all_para_lst)
         return all_para_lst
 
-    def test_images(self):
+    def get_images(self):
         """
         Fonction pour récupérer les informations qui serviront a faire le XML des images
         """
@@ -461,11 +527,29 @@ class DatametToSAP(object):
         df_SAP_images = self.df_SAP_fam[(self.df_SAP_fam['Famille Essai'] == self.fam_sap) &
                                         (self.df_SAP_fam['Envoie SAP'] == 'images')]
         lst_paras_images = list(df_SAP_images['Paramètre'].values)
-        print(lst_paras_images)
+        # print(lst_paras_images)
+        return lst_paras_images
 
-    def test_essai(self):
-        """ Test pour récupération des informations de l'essai et de l'eprouvette.
+    def get_essai(self):
+        """ Test pour récupération des informations de l'essai.
         Ces infos sont contenues dans le QR Code qui va devoir etre scanné"""
+        # print(self.get_qrcode_value())
+        # On split le qr Code :
+        qr = self.qr.split(';')
+        # print(qr)
+        # Source, TimeStamp, NoCommande, NoPoste, Batch, SequenceLoc
+        # Source = LABO_IC
+        essai_dict = self.set_essai_dict(["LABO_IC", self.current_time_sap(), qr[0], qr[1], qr[2], qr[3]])
+        # print(essai_dict)
+        return essai_dict
+
+    def get_epr(self):
+        """ Test pour récupération des informations de l'eprouvette.
+        Ces infos sont contenues dans le QR Code qui va devoir etre scanné"""
+        qr = self.qr.split(';')
+        epr_dict = self.set_epr_dict([qr[4]])
+        # print(epr_dict)
+        return epr_dict
 
 
 class ConfigDatametSap:
@@ -610,8 +694,8 @@ if __name__ == '__main__':
 
     # test datamettosap
 
-    test = DatametToSAP(path)
-    test.test_images()
+    # test = DatametToSAP(path)
+    # test.test_images()
     # test.current_time_sap()
 
     # Test class Images
@@ -620,3 +704,21 @@ if __name__ == '__main__':
     #     r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\CAMUS_C\AcquisitionImages_ESSAI STR-NORSOK_2022-10-21_10-14-32")
     #
     # test.annotation()
+
+    # test pour essai et eprouvettes :
+    # qr_code = "5301530;10;280174.11;10;60;1;FRC;MIC01;955;;;Texte:280174:PS;Texte:280174:PS;TEXTE:280174:PS"
+    # Comme on founi l'emplacement du dossier de session, on va chercher directement dans le fichier mesure la valeur du QRCode
+    test = DatametToSAP()
+    # test.test_essai()
+    # test.test_epr()
+    # test.test_para()
+    test.set_path(path)
+
+
+    val = test.get_all()
+    print(val)
+    # val.append(test.test_tout())
+    # print('val')
+    # print(val)
+    saptest = sapxml.SapXml()
+    saptest.xml_result_to_sap(val, 'test')

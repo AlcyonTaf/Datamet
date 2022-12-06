@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import copy
 # Manipulation de xml
 from lxml import etree as et
 # Fichier de configuration
@@ -43,9 +44,11 @@ class SapXml:
         # Parametre
         self.root_parametre = et.parse(self.path_to_xml_parametre).getroot()
 
-    def xml_result_to_sap(self, valeur_sap, file_path):
+
+    def xml_result_to_sap(self, valeur_sap, path_to_save, filename):
         """
         Fonction qui va générer le xml pour sap dans le cas de résultats
+        Non du fichier : IC_PL_ESS_RES_NoCommande_NoPoste_UM_SequenceLoc_Timestamp.xml
 
         Parameters :
             valeur_sap :
@@ -89,13 +92,16 @@ class SapXml:
                     self.root_eprouvette.find(balise_eprouvette).text = ident_eprouvette[balise_eprouvette]
 
                 # récupération des paramétres de l'eprouvette
+                count_para = 0
                 for parametre in eprouvette["Parametres"]:
                     for balise_parametre in parametre:
-                        print(balise_parametre + " - " + parametre[balise_parametre])
-                        self.root_parametre.find(balise_parametre).text = parametre[balise_parametre]
+                        print(balise_parametre + " - " + str(parametre[balise_parametre]))
+                        if parametre[balise_parametre]:
+                            self.root_parametre.find(balise_parametre).text = str(parametre[balise_parametre])
 
                     # On ajoute les parametres dans Eprouvette
-                    self.root_eprouvette.find("./Parametres").insert(0, self.root_parametre)
+                    self.root_eprouvette.find("./Parametres").insert(count_para, copy.deepcopy(self.root_parametre))
+                    count_para += 1
 
                 # On ajoute les Eprouvettes dans Essais :
                 self.root_essais.find("./__Essai/Eprouvettes").insert(0, self.root_eprouvette)
@@ -103,6 +109,8 @@ class SapXml:
             # On crée le fichier xml de l'essai en cours
             et.indent(self.root_essais)
             # Todo : Modifier le nom du fichier SAP en récupérant le chemin du fichier ou l'enregistrer
+            # Todo : pour test
+            dirname = os.path.dirname(__file__)
             et.ElementTree(self.root_essais).write(os.path.join(dirname, "sap.xml"), pretty_print=True,
                                               encoding='ISO-8859-1')
 
@@ -192,7 +200,14 @@ if __name__ == '__main__':
                                                                  "./ValuePara": "ValeurValuePara",
                                                                  "./ValueParaT": "ValeurValueParaT",
                                                                  "./SequenceResult": "ValeurSequenceResult",
-                                                                 "./SequenceEssEpr": "ValeurSequenceEssEpr"}]}]}]
+                                                                 "./SequenceEssEpr": "ValeurSequenceEssEpr"},
+                                                                {"./NumPara": "ValeurNumPara2",
+                                                                 "./UnitPara": "UnitPara2",
+                                                                 "./ValuePara": "ValeurValuePara2",
+                                                                 "./ValueParaT": "ValeurValueParaT2",
+                                                                 "./SequenceResult": "ValeurSequenceResult2",
+                                                                 "./SequenceEssEpr": "ValeurSequenceEssEpr2"}
+                                                                ]}]}]
 
 
     test2 = SapXml()

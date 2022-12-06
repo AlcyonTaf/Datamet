@@ -131,7 +131,11 @@ class NorsokQR(tk.Frame):
         self.ety_qrcode.focus_set()
 
     def valider(self):
-        self.controller.show_tab("norksok_result")
+        if len(self.ety_qrcode.get()) == 0:
+            messagebox.showwarning(message="Pas de valeur de QR CODE",
+                                   parent=self.controller)
+        else:
+            self.controller.show_tab("norksok_result")
 
 
 class NorksokResult(tk.Frame):
@@ -284,9 +288,7 @@ class NorksokResult(tk.Frame):
         for module in module_to_find:
             print(module)
             finded_sessions = datamet.find_session_by_qr_and_module(config=self.controller.config,
-                                                                    qrcode="1327542;30;245777.11;10;70;1;GRN;MIC01;609;;"
-                                                                           ";Texte:245777:PS;""Texte:245777:PS"
-                                                                           ";TEXTE:245777:PS",
+                                                                    qrcode=qr_code,
                                                                     module_name=module)
             if module == "Par seuillage":
                 if not finded_sessions:
@@ -399,8 +401,6 @@ class NorsokTransfert(tk.Frame):
 
         # On récupére les images générer sur la frame result
         # Ok on va afficher une liste des images et le double clic permettra de les affichers
-        # Todo : Il faut trouver le moyen de mettre l'image pour l'essai FRC au bon endroit, comment filtrer ? Par la position ? ou par l'annotation?
-        # Todo : si oublie de selection image il faut afficher un message, peut etre le faire sur la fenetre précedénte lors du clic sur valider
         images_from_result = self.controller.tab['norksok_result'][0].images.images_annot
         images_frc = {}
         images_str = {}
