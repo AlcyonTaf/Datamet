@@ -20,7 +20,7 @@ import outils
 import sapxml
 
 
-class NorsokGui(tk.Frame):
+class ScanQrGui(tk.Frame):
     def __init__(self, parent, main_app, script_path, config):
         super().__init__(parent)
         self.parent = parent
@@ -42,11 +42,11 @@ class NorsokGui(tk.Frame):
         self.nb = Notebook(self, width=1092, height=944)
         self.nb.grid(row=1, column=0)
         # Frames
-        self.tab = {"norsok_qr": [NorsokQR(parent=self.nb, controller=self),"QR"],
-                       "norksok_result": [NorksokResult(parent=self.nb, controller=self), "Resultats"],
-                       "norsok_transfert": [NorsokTransfert(parent=self.nb, controller=self), " Transfert"]}
+        self.tab = {"qr": [QR(parent=self.nb, controller=self), "QR"],
+                       "result": [Result(parent=self.nb, controller=self), "Resultats"],
+                       "transfert": [Transfert(parent=self.nb, controller=self), " Transfert"]}
 
-        self.nb.add(self.tab["norsok_qr"][0], text=self.tab["norsok_qr"][1])
+        self.nb.add(self.tab["qr"][0], text=self.tab["qr"][1])
 
     def show_tab(self, tab_name):
         tab = self.tab[tab_name][0]
@@ -57,48 +57,7 @@ class NorsokGui(tk.Frame):
         self.parent.center_window()
 
 
-        # Container va contenir les différentes pages
-        # container = tk.Frame(self, bg='red')
-        # container.grid(row=1, column=0, sticky='news')
-        # container.grid_rowconfigure(0, weight=1)
-        # container.grid_columnconfigure(0, weight=1)
-        #
-        # self.frames = {}
-        # self.frames["norsok_qr"] = NorsokQR(parent=container, controller=self)
-        # self.frames["norksok_result"] = NorksokResult(parent=container, controller=self)
-        # self.frames["norsok_transfert"] = NorsokTransfert(parent=container, controller=self)
-        # # Page d'acueil :
-        # self.show_frame("norsok_qr")
-
-    # def show_frame(self, page_name):
-    #     '''Show a frame for the given page name'''
-    #     for frame in self.frames.values():
-    #         frame.grid_remove()
-    #     frame = self.frames[page_name]
-    #     frame.event_generate("<<ShowFrame>>")
-    #     frame.grid(row=0, column=0, sticky='nesw')
-    #     self.parent.center_window()
-
-
-class NorsokBtn(tk.Frame):
-    """
-    Pour afficher une barre avec des boutons d'action
-    # TODO : Voir a l'usage si c'est bien, sinon plutot utiliser un notebook
-    """
-
-    def __init__(self, parent):
-        super().__init__(parent)
-
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=1)
-        btn_previous = Button(self, text="Précédent", command=None)
-        btn_previous.grid(row=0, column=0)
-        btn_suivant = Button(self, text="Suivant", command=None)
-        btn_suivant.grid(row=0, column=1)
-
-
-class NorsokQR(tk.Frame):
+class QR(tk.Frame):
 
     def __init__(self, parent, controller):
         super().__init__(parent)
@@ -136,10 +95,10 @@ class NorsokQR(tk.Frame):
             messagebox.showwarning(message="Pas de valeur de QR CODE",
                                    parent=self.controller)
         else:
-            self.controller.show_tab("norksok_result")
+            self.controller.show_tab("result")
 
 
-class NorksokResult(tk.Frame):
+class Result(tk.Frame):
 
     def __init__(self, parent, controller):
         super().__init__(parent)
@@ -346,7 +305,7 @@ class NorksokResult(tk.Frame):
 #         lbl.grid(row=0, column=0)
 
 
-class NorsokTransfert(tk.Frame):
+class Transfert(tk.Frame):
 
     def __init__(self, parent, controller):
         super().__init__(parent)

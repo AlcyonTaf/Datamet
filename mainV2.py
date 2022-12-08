@@ -32,13 +32,15 @@ TODO : Trier la liste des dossiers par date de création, plus récent en 1er
 # Interface graphique
 import tkinter as tk
 from tkinter import ttk, Text, OptionMenu, StringVar, filedialog as fd, Label, Entry, PhotoImage, Button
-from tkinter.messagebox import showinfo, showerror, askyesno
+from tkinter.messagebox import showinfo, showerror, askyesno, showwarning
 # Utilitaire fichier/dossier
 import os
+import sys
 
 # import fichier
 import datamet
 import norsok_gui
+import scanqr_gui
 
 # Trouver tous les fichiers d'un dossier
 # import glob
@@ -50,6 +52,8 @@ from pathlib import Path
 
 # Pour gestion des images
 from PIL import Image, ImageTk
+
+from outils import suivi_folder
 
 
 class Details(tk.Frame):
@@ -97,7 +101,7 @@ class FolderTree(tk.Frame):
 
     def process_directory(self, path):
         root_node = self.tree.insert('', 'end', text="Sessions", open=True)
-        print(os.listdir(path))
+        # print(os.listdir(path))
         user_folder = {}
         for p in os.listdir(path):
             abspath = os.path.join(path, p)
@@ -209,12 +213,14 @@ class MenuMain(tk.Menu):
             # Menu Filtre
             self.filtre_menu = tk.Menu(self, tearoff=False)
             self.add_cascade(label='Traitement par lot', underline=0, menu=self.filtre_menu)
+            self.add_cascade(label='Scan QR Code', underline=0,
+                             command=lambda: self.parent.top_resultbyqr_open(normes='ScanQR'))
             # On va créer une autre interface grahique avec TopLevel
             self.filtre_menu.add_command(label='Norsok', underline=3,
                                          command=lambda: self.parent.top_resultbyqr_open(normes='Norsok'))
 
 
-class ResultByQR(tk.Toplevel):
+class Popup(tk.Toplevel):
     """
 
     """
@@ -226,7 +232,7 @@ class ResultByQR(tk.Toplevel):
 
         # format de la fenêtre
         #self.geometry('1092x944')
-        self.title('Traitement des résultats par lot')
+
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
@@ -236,8 +242,13 @@ class ResultByQR(tk.Toplevel):
 
         # Gestion de l'affichage de la frame en fonction de la norme :
         if self.norme == "Norsok":
+            self.title('Traitement des résultats par lot')
             # self.gui = Norsok_Gui(self, self.main_app)
             self.gui = norsok_gui.NorsokGui(self, self.main_app, script_path, config=config)
+            self.gui.grid(row=0, column=0, sticky='news', padx=10, pady=10)
+        if self.norme == "ScanQR":
+            self.title('Scanner le QR Code')
+            self.gui = scanqr_gui.ScanQrGui(self, self.main_app, script_path, config=config)
             self.gui.grid(row=0, column=0, sticky='news', padx=10, pady=10)
 
         self.center_window()
@@ -248,75 +259,56 @@ class ResultByQR(tk.Toplevel):
         windows_height = self.winfo_height()
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
-        print("Windows : " + str(windows_width) + " - " + str(windows_height))
-        print("screen : " + str(screen_width) + " - " + str(screen_height))
+        # print("Windows : " + str(windows_width) + " - " + str(windows_height))
+        # print("screen : " + str(screen_width) + " - " + str(screen_height))
 
         center_x = int(screen_width / 2 - windows_width / 2)
         center_y = int(screen_height / 2 - windows_height / 2) - 40  # - 60 pour tenir compte de la barre windows
 
         self.geometry(f'+{center_x}+{center_y}')
 
-        # Menu déroulant pour choix de l'interface
-        # options = ["Norsok"]
-        # self.list_lot = StringVar()
-        # self.drop_down = OptionMenu(self, self.list_lot, *options, command=self.show_gui)
-        # self.drop_down.config(width=10)
-        # self.drop_down.grid(row=0, column=0, sticky='n')
 
-    # def show_gui(self, value):
-    #     if value == "Norsok":
-    #         self.gui = Norsok_Gui(self, self.main_app)
-    #         self.gui.grid(row=1, column=0, sticky='news')
+# Todo : a supprimer
+class ScanQR(tk.Frame):
 
+    def __init__(self, parent, controller):
+        super().__init__(parent)
+        self.parent = parent
+        self.controller = controller
 
-# class Norsok_Gui(tk.Frame):
-#     def __init__(self, parent, main_app):
-#         super().__init__(parent)
-#         self.parent = parent
-#         self.main_app = main_app
-#         # self.config(bg="red")
-#         # self.config(height=600)
-#
-#         self.grid_rowconfigure(0, weight=1)
-#         self.grid_rowconfigure(1, weight=1)
-#         self.grid_rowconfigure(2, weight=1)
-#         self.grid_columnconfigure(0, weight=1)
-#         #self.grid_columnconfigure(1, weight=1)
-#
-#         # on affiche le code barre pour config la scannette
-#
-#         print(os.path.join(script_path, "Pictures\\barcoderule2.gif"))
-#         img_barcoderule2 = PhotoImage(file=os.path.join(script_path, 'Pictures\\barcoderule2.gif'))
-#         self.lbl_img = Label(self, image=img_barcoderule2)
-#         self.lbl_img.grid(row=0, column=0, sticky='n')
-#         self.lbl_img.image = img_barcoderule2
-#
-#         # Input Text pour la valeur du QR CODE :
-#         self.lbl_qrcode = Label(self, text="Scanner le Code barre si dessus, puis le QR Code sur la feuille de travail")
-#         self.ety_qrcode = Entry(self, width=100)
-#
-#         self.lbl_qrcode.grid(row=1, column=0, sticky='n')
-#         self.ety_qrcode.grid(row=2, column=0, sticky='n')
-#
-#         self.btn_valider = Button(self, text="Valider", command=self.test)
-#         self.btn_valider.grid(row=3, column=0, sticky='n', padx=5, pady=5)
-#
-#         self.ety_qrcode.focus_set()
-#         # 2 input text pour les QR Code :
-#         # self.lbl_FRC = Label(self, text="FRC QRCODE")
-#         # self.ety_FRC = Entry(self)
-#         # self.lbl_STR = Label(self, text="STR QRCODE")
-#         # self.ety_STR = Entry(self)
-#         #
-#         # self.lbl_FRC.grid(row=0, column=0, sticky='n')
-#         # self.ety_FRC.grid(row=0, column=1, sticky='n')
-#         # self.lbl_STR.grid(row=1, column=0, sticky='n')
-#         # self.ety_STR.grid(row=1, column=1, sticky='n')
-#
-#     def test(self):
-#         print("ok dans test")
-#         sdfs = datamet.FindSessionByQR(config=config, QRCode='ValeurQRCODE')
-#         print(sdfs)
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_rowconfigure(2, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        # self.grid_columnconfigure(1, weight=1)
+
+        # on affiche le code barre pour config la scannette
+
+        # print(os.path.join(self.controller.script_path, "Pictures\\barcoderule2.gif"))
+        img_barcoderule2 = PhotoImage(file=os.path.join(script_path, 'Pictures\\barcoderule2.gif'))
+        self.lbl_img = Label(self, image=img_barcoderule2)
+        self.lbl_img.grid(row=0, column=0, sticky='s')
+        self.lbl_img.image = img_barcoderule2
+
+        # Input Text pour la valeur du QR CODE :
+        self.lbl_qrcode = Label(self, text="Scanner le Code barre si dessus, puis le QR Code sur la feuille de travail")
+        self.ety_qrcode = Entry(self, width=100)
+
+        self.lbl_qrcode.grid(row=1, column=0,)
+        self.ety_qrcode.grid(row=2, column=0, sticky='n')
+
+        self.btn_valider = Button(self, text="Valider", command=self.valider)
+        self.btn_valider.grid(row=3, column=0, sticky='nesw', padx=5, pady=5)
+
+        self.ety_qrcode.focus_set()
+
+    def valider(self):
+        if len(self.ety_qrcode.get()) == 0:
+            showwarning(message="Pas de valeur de QR CODE",
+                                   parent=self.controller)
+        else:
+            self.controller.show_tab("norksok_result")
+
 
 
 class App(tk.Tk):
@@ -355,14 +347,14 @@ class App(tk.Tk):
     # Pour le traitement par LOT avec QR Code
     def top_resultbyqr_open(self, normes):
         if self.top_resultbyqr is None:
-            self.top_resultbyqr = ResultByQR(self, norme=normes)
+            self.top_resultbyqr = Popup(self, norme=normes)
         else:
             self.top_resultbyqr.deiconify()
         self.top_resultbyqr.bind("<Destroy>", self._child_destroyed)
 
     def _child_destroyed(self, event):
         if event.widget == self.top_resultbyqr:
-            print("Destuction de resultbyQR")
+            # print("Destuction de resultbyQR")
             self.top_resultbyqr = None
 
     # afficher les erreurs
@@ -380,6 +372,11 @@ if __name__ == '__main__':
         config.read('config.ini', encoding='utf-8')
         # lecture fichier de resultat
         get_mesures = datamet.Mesures()
+        # Création du dossier de suivi
+        sys.stdout = open(os.devnull, "w")
+        suivi_folder()
+        sys.stdout = sys.__stdout__
+        # Loop GUI
         app = App()
         app.mainloop()
     else:

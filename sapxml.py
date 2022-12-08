@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 import os
-import copy
+import outils
 # Manipulation de xml
 from lxml import etree as et
 # Fichier de configuration
 from configparser import ConfigParser
+
+from copy import deepcopy
 
 
 class SapXml:
@@ -37,18 +39,21 @@ class SapXml:
         self.path_to_xml_eprouvette = os.path.join(self.xml_template_folder, 'xml_template_eprouvette.xml')
         self.path_to_xml_parametre = os.path.join(self.xml_template_folder, 'xml_template_parametre.xml')
         # import des templates
-        # Essais
-        self.root_essais = et.parse(self.path_to_xml_essais).getroot()
-        # Eprouvette
-        self.root_eprouvette = et.parse(self.path_to_xml_eprouvette).getroot()
-        # Parametre
-        self.root_parametre = et.parse(self.path_to_xml_parametre).getroot()
+        # # Essais
+        # self.root_essais = et.parse(self.path_to_xml_essais).getroot()
+        # # Eprouvette
+        # self.root_eprouvette = et.parse(self.path_to_xml_eprouvette).getroot()
+        # # Parametre
+        # self.root_parametre = et.parse(self.path_to_xml_parametre).getroot()
 
 
-    def xml_result_to_sap(self, valeur_sap, path_to_save, filename):
+    def xml_result_to_sap(self, valeur_sap, path_to_sap=None, filename=None):
         """
         Fonction qui va générer le xml pour sap dans le cas de résultats
-        Non du fichier : IC_PL_ESS_RES_NoCommande_NoPoste_UM_SequenceLoc_Timestamp.xml
+        Non du fichier : IC_PL_ESS_RES_NoCommande_NoPoste_UM_SequenceLoc_Timestamp.xml => doit etre transmis lors
+        de l'appel de la fonction
+        path_to_save : emplacement ou enregistrer le fichier
+        Le fichier est créer dans le dossier /Suivi/Date du jour/XML
 
         Parameters :
             valeur_sap :
@@ -75,44 +80,56 @@ class SapXml:
         return :
 
         """
-        print('result_to_sap fonction')
-        print(self.xml_encoding)
+        # Essais
+        self.root_essais = deepcopy(et.parse(self.path_to_xml_essais).getroot())
+
+
+
+
+        # print('result_to_sap fonction')
+        # print(self.xml_encoding)
         for essai in valeur_sap:
             ident_essai = essai['ESSAI']
             # récupération de l'i de l'essai
             for balise_essai in ident_essai:
-                print(balise_essai + " - " + str(ident_essai[balise_essai]))
+                # print(balise_essai + " - " + str(ident_essai[balise_essai]))
                 self.root_essais.find(balise_essai).text = ident_essai[balise_essai]
 
             # récupération des Eprouvette de l'essai :
             for eprouvette in essai['Eprouvettes']:
                 ident_eprouvette = eprouvette['EPROUVETTE']
+                # Eprouvette
+                self.root_eprouvette = deepcopy(et.parse(self.path_to_xml_eprouvette).getroot())
                 for balise_eprouvette in ident_eprouvette:
-                    print(balise_eprouvette + " - " + str(ident_eprouvette[balise_eprouvette]))
+                    # print(balise_eprouvette + " - " + str(ident_eprouvette[balise_eprouvette]))
                     self.root_eprouvette.find(balise_eprouvette).text = ident_eprouvette[balise_eprouvette]
 
                 # récupération des paramétres de l'eprouvette
                 count_para = 0
                 for parametre in eprouvette["Parametres"]:
+                    # Parametre
+                    self.root_parametre = deepcopy(et.parse(self.path_to_xml_parametre).getroot())
                     for balise_parametre in parametre:
-                        print(balise_parametre + " - " + str(parametre[balise_parametre]))
+                        # print(balise_parametre + " - " + str(parametre[balise_parametre]))
                         if parametre[balise_parametre]:
                             self.root_parametre.find(balise_parametre).text = str(parametre[balise_parametre])
 
                     # On ajoute les parametres dans Eprouvette
-                    self.root_eprouvette.find("./Parametres").insert(count_para, copy.deepcopy(self.root_parametre))
+                    self.root_eprouvette.find("./Parametres").insert(count_para, deepcopy(self.root_parametre))
                     count_para += 1
 
                 # On ajoute les Eprouvettes dans Essais :
-                self.root_essais.find("./__Essai/Eprouvettes").insert(0, self.root_eprouvette)
+                self.root_essais.find("./__Essai/Eprouvettes").insert(0, deepcopy(self.root_eprouvette))
 
             # On crée le fichier xml de l'essai en cours
             et.indent(self.root_essais)
-            # Todo : Modifier le nom du fichier SAP en récupérant le chemin du fichier ou l'enregistrer
-            # Todo : pour test
-            dirname = os.path.dirname(__file__)
-            et.ElementTree(self.root_essais).write(os.path.join(dirname, "sap.xml"), pretty_print=True,
-                                              encoding='ISO-8859-1')
+            if path_to_sap and filename:
+                et.ElementTree(self.root_essais).write(os.path.join(outils.suivi_folder_path_today, filename), pretty_print=True,
+                                                       encoding='ISO-8859-1')
+            else:
+                dirname = os.path.dirname(__file__)
+                et.ElementTree(self.root_essais).write(os.path.join(outils.suivi_folder_path_today, "sap.xml"), pretty_print=True,
+                                                  encoding='ISO-8859-1')
 
 
 

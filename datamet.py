@@ -61,10 +61,12 @@ from pathlib import Path
 from datetime import datetime
 from configparser import ConfigParser
 from PIL import Image, ImageTk, ImageDraw, ImageFont
+from copy import deepcopy
 
 import pandas as pd
 import numpy as np
 
+import outils
 import sapxml
 
 # Pour générer un Tiff à partir d'un PDF
@@ -106,7 +108,7 @@ def find_session_by_qr_and_module(config, qrcode, module_name):
         qrcode = "".join(qrcode.split(';')[0:4])
         module_session = mesures.get(section='General', para='Module')
         if qr_session == qrcode and module_session == module_name:
-            print("trouvé")
+            # print("trouvé")
             finded_sessions.append(os.path.dirname(file))
 
     return finded_sessions
@@ -133,7 +135,7 @@ def find_session_by_qr(config, qrcode):
         # print(mesures.get(section='Echantillon1', para='Commentaire'))
         qr_session = mesures.get(section='Echantillon1', para='Commentaire')
         if qr_session == qrcode:
-            print("trouvé")
+            # print("trouvé")
             finded_sessions.append(os.path.dirname(file))
 
     return finded_sessions
@@ -198,7 +200,7 @@ class ImagesDatamet(object):
             for image_name in self.images:
                 for annot in self.annots:
                     if image_name.endswith(self.annots[annot]):
-                        print(str(image_name) + " - " + str(self.annots[annot]))
+                        # print(str(image_name) + " - " + str(self.annots[annot]))
                         self.images_annot[image_name] = [self.images[image_name], annot]
                         # On ajoute l'annotation sur l'image
                         add_text = ImageDraw.Draw(self.images_annot[image_name][0])
@@ -327,20 +329,22 @@ class DatametToSAP(object):
         epr = self.get_epr()
         paras = self.get_para()
 
+
         epr['Parametres'] = paras
         essai['Eprouvettes'].append(epr)
+        #print(essai)
 
         essais = []
         essais.append(essai)
 
         return essais
 
-    @staticmethod
-    def current_time_sap():
-        """ Pour renvoyer la date et l'heure au format sap"""
-        now = datetime.now()
-        now_sap = now.strftime("%Y%m%d%H%M%S%f")
-        return now_sap
+    # @staticmethod
+    # def current_time_sap():
+    #     """ Pour renvoyer la date et l'heure au format sap"""
+    #     now = datetime.now()
+    #     now_sap = now.strftime("%Y%m%d%H%M%S%f")
+    #     return now_sap
 
     def get_datamet_module(self):
         val = self.msr.get('General', 'Module')
@@ -354,7 +358,7 @@ class DatametToSAP(object):
         """ permet de créer le dict depuis une liste des informations de l'eprouvette dans cet ordre  :
             SeqEssais"""
 
-        epr_tmp = self.epr_tpl
+        epr_tmp = deepcopy(self.epr_tpl)
         x = 0
         for key in epr_tmp['EPROUVETTE']:
             epr_tmp['EPROUVETTE'][key] = epr_lst[x]
@@ -366,7 +370,7 @@ class DatametToSAP(object):
         """ permet de créer le dict depuis une liste des informations de l'essai dans cet ordre  :
             Source, TimeStamp, NoCommande, NoPoste, Batch, SequenceLoc"""
 
-        essai_tmp = self.essai_tpl
+        essai_tmp = deepcopy(self.essai_tpl)
         x = 0
         for key in essai_tmp['ESSAI']:
             essai_tmp['ESSAI'][key] = essai_lst[x]
@@ -378,7 +382,7 @@ class DatametToSAP(object):
         """ permet de créer le dict depuis un liste de para dans un ordre définit :
             NumPara, UnitPara, ValuePara, ValueParaT, SequenceResult, SequenceEssEpr"""
 
-        para_tmp = self.para_tpl
+        para_tmp = deepcopy(self.para_tpl)
         x = 0
         for key in para_tmp:
             para_tmp[key] = para_lst[x]
@@ -539,7 +543,7 @@ class DatametToSAP(object):
         # print(qr)
         # Source, TimeStamp, NoCommande, NoPoste, Batch, SequenceLoc
         # Source = LABO_IC
-        essai_dict = self.set_essai_dict(["LABO_IC", self.current_time_sap(), qr[0], qr[1], qr[2], qr[3]])
+        essai_dict = self.set_essai_dict(["LABO_IC", outils.current_time_sap(), qr[0], qr[1], qr[2], qr[3]])
         # print(essai_dict)
         return essai_dict
 

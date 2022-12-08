@@ -1,9 +1,49 @@
 # -*- coding: utf-8 -*-
 
 import tkinter as tk
+import os
 from tkinter import ttk
 from tkinter.ttk import Label
 from PIL import ImageTk
+from datetime import datetime
+
+root_folder_path = None
+suivi_folder_path = None
+suivi_folder_path_today = None
+
+
+def current_time_sap():
+    """ Pour renvoyer la date et l'heure au format sap"""
+    now = datetime.now()
+    now_sap = now.strftime("%Y%m%d%H%M%S%f")
+    return now_sap
+
+def suivi_folder():
+    """
+    Fonction pour la gestion des dossiers de suivi : contient les fichiers xml généré et les logs
+    Un dossier par jour.
+    Le but est de vérifier si le dossier du jour existe, sinon on le créer.
+    Le dossier de suivi est forcément a l'emplacement de l'executable
+    """
+    global root_folder_path
+    global suivi_folder_path
+    global suivi_folder_path_today
+    root_folder_path = os.path.dirname(__file__)
+    suivi_folder_path = os.path.join(root_folder_path, "Suivi")
+
+    now = datetime.now()
+    today = now.strftime("%d-%m-%Y")
+
+    suivi_folder_path_today = os.path.join(suivi_folder_path, today)
+    print(suivi_folder)
+
+    if not os.path.exists(suivi_folder_path):
+        # Création du dossier Suivi
+        os.makedirs(suivi_folder_path)
+    else:
+        if not os.path.exists(suivi_folder_path_today):
+            # Création du dossier de suivi du jour
+            os.makedirs(suivi_folder_path_today)
 
 
 class ImagesList(tk.Frame):
@@ -13,6 +53,7 @@ class ImagesList(tk.Frame):
     Class pour l'affichage d'un treeview avec une liste d'image et annotation et un popup au double clic
     images :
     """
+
     def __init__(self, parent, controller, images=None):
         super().__init__(parent)
         self.parent = parent
@@ -51,8 +92,8 @@ class ImagesList(tk.Frame):
             item_values = self.tree.item(ref_item, "text")
             show = ShowImage(self.controller, self, item_values)
             show.grab_set()
-            print(item_values)
-            print(ref_item)
+            # print(item_values)
+            # print(ref_item)
 
 
 class ShowImage(tk.Toplevel):
