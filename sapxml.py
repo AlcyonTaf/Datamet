@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
 import os
+
+import mainV2
 import outils
+
+# Log
+import logging
+logger = logging.getLogger(__name__)
+
 # Manipulation de xml
 from lxml import etree as et
 # Fichier de configuration
@@ -47,13 +54,14 @@ class SapXml:
         # self.root_parametre = et.parse(self.path_to_xml_parametre).getroot()
 
 
-    def xml_result_to_sap(self, valeur_sap, path_to_sap=None, filename=None):
+    def xml_result_to_sap(self, valeur_sap, path_to_sap=None, filename=None, ispictures=False):
         """
         Fonction qui va générer le xml pour sap dans le cas de résultats
         Non du fichier : IC_PL_ESS_RES_NoCommande_NoPoste_UM_SequenceLoc_Timestamp.xml => doit etre transmis lors
         de l'appel de la fonction
         path_to_save : emplacement ou enregistrer le fichier
-        Le fichier est créer dans le dossier /Suivi/Date du jour/XML
+        Le fichier est créer dans le dossier /Suivi/Date du jour/xml résultats
+        Si ispictures = True, on enregistre le xml dans le dossier images
 
         Parameters :
             valeur_sap :
@@ -82,9 +90,6 @@ class SapXml:
         """
         # Essais
         self.root_essais = deepcopy(et.parse(self.path_to_xml_essais).getroot())
-
-
-
 
         # print('result_to_sap fonction')
         # print(self.xml_encoding)
@@ -124,11 +129,21 @@ class SapXml:
             # On crée le fichier xml de l'essai en cours
             et.indent(self.root_essais)
             if path_to_sap and filename:
-                et.ElementTree(self.root_essais).write(os.path.join(outils.suivi_folder_path_today, filename), pretty_print=True,
-                                                       encoding='ISO-8859-1')
+                if not ispictures:
+                    # Résultats
+                    et.ElementTree(self.root_essais).write(
+                        os.path.join(outils.suivi_folder_dict["xml"], filename),
+                        pretty_print=True,
+                        encoding='ISO-8859-1')
+                else:
+                    # Images
+                    et.ElementTree(self.root_essais).write(
+                        os.path.join(outils.suivi_folder_dict["pictures"], filename),
+                        pretty_print=True,
+                        encoding='ISO-8859-1')
             else:
                 dirname = os.path.dirname(__file__)
-                et.ElementTree(self.root_essais).write(os.path.join(outils.suivi_folder_path_today, "sap.xml"), pretty_print=True,
+                et.ElementTree(self.root_essais).write(os.path.join(dirname, "sap.xml"), pretty_print=True,
                                                   encoding='ISO-8859-1')
 
 
@@ -136,7 +151,17 @@ class SapXml:
     def xml_tiff_to_sap(self):
         """
         fonction qui va générer le xml pour sap dans le cas d'annexe
-        :return:
+        La génération du XML est comme pour les résultats, il n'y a que le para qui change avec le nom du fichier dans
+        valueParaT
+        <Parametre>
+            <NumPara>907</NumPara>
+            <UnitPara/>
+            <ValuePara/>
+            <ValueParaT>TIFF_1330382_160_319079.11_10_10.tif</ValueParaT>
+            <SequenceResult>1</SequenceResult>
+            <SequenceEssEpr>1</SequenceEssEpr>
+          </Parametre>
+
         """
         print('xml_tiff_to_sap fonction')
 

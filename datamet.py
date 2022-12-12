@@ -69,7 +69,13 @@ import numpy as np
 import outils
 import sapxml
 
+# Log
+import logging
+logger = logging.getLogger(__name__)
+
+
 # Pour générer un Tiff à partir d'un PDF
+# Todo peut etre désactivé, utilisation de pillow a la place
 magick_home = ".\\ImageMagickDLL\\"
 os.environ["MAGICK_HOME"] = magick_home
 os.environ["MAGICK_CODER_MODULE_PATH"] = magick_home + os.sep + "modules" + os.sep + "coders"
@@ -77,7 +83,6 @@ from wand.image import Image as ImageWand
 from wand.color import Color
 import main
 
-from sapxml import SapXml
 
 
 def find_session_by_qr_and_module(config, qrcode, module_name):
@@ -157,9 +162,9 @@ class ImagesDatamet(object):
         self.annots = {
             # Todo voir pour mettre ceci dans un fichier de config et en même temps rajouter une ref a l'essai
             "Peau sup": "_1_1_1.tif",
-            "1/4": "_1_1_2.tif",
+            "1/4 ep": "_1_1_2.tif",
             "Mi ep": "_1_1_3.tif",
-            "3/4": "_1_1_4.tif",
+            "3/4 ep": "_1_1_4.tif",
             "Peau inf": "_1_1_5.tif"
         }
 
@@ -325,6 +330,7 @@ class DatametToSAP(object):
 
     def get_all(self):
         # On récupère et on assemble les différentes parties : Essai => Eprouvette => Parametre
+        # Uniquement pour les résultats
         essai = self.get_essai()
         epr = self.get_epr()
         paras = self.get_para()
@@ -519,20 +525,40 @@ class DatametToSAP(object):
         # print(all_para_lst)
         return all_para_lst
 
-    def get_images(self):
+    def get_images(self, pictures_name):
         """
         Fonction pour récupérer les informations qui serviront a faire le XML des images
+        pictures_name contient le dict des images avec en clef, le nom, en lst[0] l'image, et en lst[1] l'annotation
         """
         # Todo : pour enregistré les images utiliser ceci: image_pil.save('testpillow.tif', compression="packbits", resolution=150)
-
+        paras_lst = []
         # On va chercher dans le tableau ZCMT les paras images a transmettre
         # Cas particulier des images :
         # On connait les para ou il faudra envoyer une image en annexe en ajoutant "images" dans la colonne "Envoie SAP"
         df_SAP_images = self.df_SAP_fam[(self.df_SAP_fam['Famille Essai'] == self.fam_sap) &
                                         (self.df_SAP_fam['Envoie SAP'] == 'images')]
         lst_paras_images = list(df_SAP_images['Paramètre'].values)
+        if len(lst_paras_images) == 1:
+            for picture_name in pictures_name:
+                para_lst = [lst_paras_images[0], "", "", picture_name, 1, 1]
+                paras_lst.append((self.set_para_dict(para_lst).copy()))
+        else:
+            print("Erreur : Il y a plus d'un parametres pour les images")
+            logger.error("Il y a plus d'un parametres pour les images")
         # print(lst_paras_images)
-        return lst_paras_images
+
+        # On assemble toutes les informations
+        essai = self.get_essai()
+        epr = self.get_epr()
+
+        epr['Parametres'] = paras_lst
+        essai['Eprouvettes'].append(epr)
+
+        essais = []
+        essais.append(essai)
+        print(essai)
+        return essais
+
 
     def get_essai(self):
         """ Test pour récupération des informations de l'essai.
@@ -658,9 +684,9 @@ class Resultats:
 
 if __name__ == '__main__':
     # test lecture fichier mesures
-    # path = r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\CAMUS_C\Fraction Phase_SEU_ESSAI FRC-NORSOK_2022-10-21_09-47-44"
+    path = r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\CAMUS_C\Fraction Phase_SEU_ESSAI FRC-NORSOK_2022-10-21_09-47-44"
     # Test avec une aquisitiion qui ne contient pas de fichier résultats
-    path = r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\CAMUS_C\AcquisitionImages_ESSAI STR-NORSOK_2022-10-21_10-14-32"
+    #path = r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\CAMUS_C\AcquisitionImages_ESSAI STR-NORSOK_2022-10-21_10-14-32"
     # path = os.path.abspath(
     #    r"E:\Romain\Documents\Romain bidouille\Informatique\Taf\Datamet\Exemple résultat\ISO 643_INT_277171_2022-06-07_10-59-04\277171_Mesures.txt")
     # Mesures = ConfigParser()
@@ -719,10 +745,9 @@ if __name__ == '__main__':
     test.set_path(path)
 
 
-    val = test.get_all()
+    val = test.get_images()
     print(val)
     # val.append(test.test_tout())
     # print('val')
     # print(val)
-    saptest = sapxml.SapXml()
-    saptest.xml_result_to_sap(val, 'test')
+

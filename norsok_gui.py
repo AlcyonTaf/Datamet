@@ -19,6 +19,10 @@ import mainV2
 import outils
 import sapxml
 
+# Log
+import logging
+logger = logging.getLogger(__name__)
+
 
 class NorsokGui(tk.Frame):
     def __init__(self, parent, main_app, script_path, config):
@@ -27,6 +31,9 @@ class NorsokGui(tk.Frame):
         self.main_app = main_app
         self.script_path = script_path
         self.config = config
+
+        # Log test
+        logger.info('Ouverture fenêtre Norsok')
 
         #self.configure(width=944, height=1092)
 
@@ -136,6 +143,7 @@ class NorsokQR(tk.Frame):
             messagebox.showwarning(message="Pas de valeur de QR CODE",
                                    parent=self.controller)
         else:
+            logger.info(f'Scan du QR : {self.ety_qrcode.get()}')
             self.controller.show_tab("norksok_result")
 
 
@@ -414,12 +422,14 @@ class NorsokTransfert(tk.Frame):
         images_from_result = self.controller.tab['norksok_result'][0].images.images_annot
         images_frc = {}
         images_str = {}
+
+
+
         for image in images_from_result:
             # On cherche l'image pour l'essai FRC car on la annoter "Image pour structure"
             if images_from_result[image][1] == "Image pour structure":
                 # Image de l'essai FRC
                 images_str[image] = images_from_result[image]
-
             else:
                 # Images de l'essai STR
                 images_frc[image] = images_from_result[image]
@@ -437,6 +447,8 @@ class NorsokTransfert(tk.Frame):
             # On lance la mise en forme des résultats avec la class datamettosap
             self.datametToSap.set_path(frc_values)
             frc_to_sap_values = self.datametToSap.get_all()
+            # mise en forme pour les images :
+            frc_to_sap_pictures = self.datametToSap.get_images(images_frc)
             # print(frc_to_sap_values)
             for value in frc_to_sap_values:
                 self.valeurs_frc.insert('end', str(value) + "\n")
@@ -444,6 +456,23 @@ class NorsokTransfert(tk.Frame):
             # Création du nom du fichier :
             # IC_PL_ESS_RES_NoCommande_NoPoste_UM_SequenceLoc_Timestamp.xml
             qr = self.datametToSap.qr.split(';')
+
+            # On va enregistrer les images ici pour les renommer en fonction de l'essai
+            # enregistrement des images :
+            # Todo : Changer le nom des images pour ajouter l'information de l'annotation
+            # Todo : il faut également enregistrer le XMl des images
+            for image in images_frc:
+                # Dossier pour l'enregistrement des images :
+                # Todo : plus tot que les renommer ici, pourquoi ne pas le faire au moment de la création
+                picture_name = "{NoCommande}_{NoPoste}_{UM}_{SequenceLoc}_{position}.tif".format(
+                    NoCommande=qr[0],
+                    NoPoste=qr[1],
+                    UM=qr[2],
+                    SequenceLoc=qr[3],
+                    position=images_frc[image][1].replace("/", "-"))
+                path_pictures = os.path.join(outils.suivi_folder_dict["pictures"], picture_name)
+                images_frc[image][0].save(path_pictures, compression="packbits", resolution=150)
+
 
             filename = "IC_PL_ESS_RES_{NoCommande}_{NoPoste}_{UM}_{SequenceLoc}_{Timestamp}.xml".format(
                 NoCommande=qr[0],
@@ -453,6 +482,9 @@ class NorsokTransfert(tk.Frame):
                 Timestamp=outils.current_time_sap())
 
             sap_xml.xml_result_to_sap(frc_to_sap_values, self.sap_export_path, filename)
+
+            # Todo : Créer le fichier xml pour les images :
+            # Question pour Yann : est ce que je pourrais mettre les résultats et les images dans le même xml?
 
 
         # On va récupérer le chemin de l'essai STR sélectionner sur la page NorsokResult

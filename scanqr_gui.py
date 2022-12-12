@@ -19,6 +19,10 @@ import mainV2
 import outils
 import sapxml
 
+# Log
+import logging
+logger = logging.getLogger(__name__)
+
 
 class ScanQrGui(tk.Frame):
     def __init__(self, parent, main_app, script_path, config):
@@ -181,36 +185,6 @@ class Result(tk.Frame):
             messagebox.showwarning(message="Vous n'avez pas sélectionné une session de chaque type d'essai",
                                    parent=self.controller)
 
-
-
-
-
-    # def on_select_images_tree_str_item(self, event):
-    #     if len(self.images_tree_str.selection()) > 0:
-    #         ref_item = self.images_tree_str.selection()[0]
-    #         item_values = self.images_tree_str.item(ref_item, "text")
-    #         test = NorsokShowImage(self.controller, self, item_values)
-    #         test.grab_set()
-    #         print(item_values)
-    #         print(ref_item)
-
-    def on_select_tree_str_item(self, event):
-        if len(self.tree_str.selection()) > 0:
-            ref_item = self.tree_str.selection()[0]
-            item_values = self.tree_str.item(ref_item, "value")[0]
-            # print(item_values)
-            # print(ref_item)
-            if item_values:
-                self.images = datamet.ImagesDatamet()
-                self.images.get_images(item_values)
-                self.images.annotation()
-                images_list = self.images.images_annot
-
-                # self.images_tree_str.delete(*self.images_tree_str.get_children())
-                # for image_name in images_list:
-                #     self.images_tree_str.insert('', 'end', text=image_name, values=(images_list[image_name][1],))
-                self.images_tree_str.insert(images_list)
-
     def on_select_tree_frc_item(self, event):
         if len(self.tree_frc.selection()) > 0:
             ref_item = self.tree_frc.selection()[0]
@@ -280,29 +254,6 @@ class Result(tk.Frame):
                             session_name = os.path.basename(session_path)
                             self.tree_str.insert('', 'end', text=session_name, values=(session_path,))
 
-
-# class NorsokShowImage(tk.Toplevel):
-#     # Todo a modifier pour qu'il soit appeller depuis la class ImageListAndPopup, peut surement etre intégrer dans la class ImageListAndPopup
-#     def __init__(self, main_app, parent, image_name):
-#         self.main_app = main_app
-#         self.parent = parent
-#         super().__init__(main_app)
-#         self.title("Affichage d'une image")
-#         self.grid_rowconfigure(0, weight=1)
-#         self.grid_columnconfigure(0, weight=1)
-#
-#         image_pil = self.parent.images.images_annot[image_name][0]
-#
-#         image_pil.thumbnail((500, 500))
-#
-#         image = ImageTk.PhotoImage(image_pil)
-#
-#         # Essai d'enregistrement pour essai
-#         # image_pil.save('testpillow.tif', compression="packbits", resolution=150)
-#
-#         lbl = Label(self, image=image)
-#         lbl.image = image
-#         lbl.grid(row=0, column=0)
 
 
 class Transfert(tk.Frame):

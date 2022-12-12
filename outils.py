@@ -2,14 +2,17 @@
 
 import tkinter as tk
 import os
+
+# Log
+import logging
+logger = logging.getLogger(__name__)
+
 from tkinter import ttk
 from tkinter.ttk import Label
 from PIL import ImageTk
 from datetime import datetime
 
-root_folder_path = None
-suivi_folder_path = None
-suivi_folder_path_today = None
+suivi_folder_dict = None
 
 
 def current_time_sap():
@@ -25,25 +28,21 @@ def suivi_folder():
     Le but est de vérifier si le dossier du jour existe, sinon on le créer.
     Le dossier de suivi est forcément a l'emplacement de l'executable
     """
-    global root_folder_path
-    global suivi_folder_path
-    global suivi_folder_path_today
-    root_folder_path = os.path.dirname(__file__)
-    suivi_folder_path = os.path.join(root_folder_path, "Suivi")
+    global suivi_folder_dict
+    suivi_folder_dict = {}
+    suivi_folder_dict["root"] = os.path.dirname(__file__)
+    suivi_folder_dict["suivi"] = os.path.join(suivi_folder_dict["root"], "Suivi")
 
     now = datetime.now()
     today = now.strftime("%d-%m-%Y")
 
-    suivi_folder_path_today = os.path.join(suivi_folder_path, today)
-    print(suivi_folder)
+    suivi_folder_dict["today"] = os.path.join(suivi_folder_dict["suivi"], today)
+    suivi_folder_dict["xml"] = os.path.join(suivi_folder_dict["today"], "xml résultats")
+    suivi_folder_dict["pictures"] = os.path.join(suivi_folder_dict["today"], "images")
 
-    if not os.path.exists(suivi_folder_path):
-        # Création du dossier Suivi
-        os.makedirs(suivi_folder_path)
-    else:
-        if not os.path.exists(suivi_folder_path_today):
-            # Création du dossier de suivi du jour
-            os.makedirs(suivi_folder_path_today)
+    for path in suivi_folder_dict:
+        if not os.path.exists(suivi_folder_dict[path]):
+            os.makedirs(suivi_folder_dict[path])
 
 
 class ImagesList(tk.Frame):

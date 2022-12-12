@@ -36,6 +36,9 @@ from tkinter.messagebox import showinfo, showerror, askyesno, showwarning
 # Utilitaire fichier/dossier
 import os
 import sys
+# Log
+import logging
+logger = logging.getLogger(__name__)
 
 # import fichier
 import datamet
@@ -52,8 +55,8 @@ from pathlib import Path
 
 # Pour gestion des images
 from PIL import Image, ImageTk
-
-from outils import suivi_folder
+# utilitaires
+import outils
 
 
 class Details(tk.Frame):
@@ -373,27 +376,22 @@ if __name__ == '__main__':
         # lecture fichier de resultat
         get_mesures = datamet.Mesures()
         # Création du dossier de suivi
-        sys.stdout = open(os.devnull, "w")
-        suivi_folder()
-        sys.stdout = sys.__stdout__
+        #sys.stdout = open(os.devnull, "w")
+        outils.suivi_folder()
+        #sys.stdout = sys.__stdout__
+        # Log
+        logfile = os.path.join(outils.suivi_folder_dict["today"], "log.txt")
+        logging.basicConfig(filename=logfile,
+                            filemode='a',
+                            encoding='utf-8',
+                            format='%(asctime)s - %(levelname)s - %(name)s - %(message)s',
+                            datefmt='%d-%b-%y %H:%M:%S',
+                            level=logging.INFO)
         # Loop GUI
         app = App()
         app.mainloop()
     else:
+        logging.error("Le fichier config.ini n'est pas présent.")
         showerror("Error", message="Le fichier config.ini n'est pas présent.")
         # quit()
 
-    # path = r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\ISO 643_INT_277171_2022-06-07_10-59-04\277171_Mesures.txt"
-    # test = resultats.Mesures()
-    # test.set_path(path)
-    # print(test.get_sections())
-
-    # test lecture fichier mesures
-    # path = os.path.abspath(
-    #     "C:\\Users\\CRMC\\PycharmProjects\\Datamet\\Exemple résultat\\ISO 643_INT_277171_2022-06-07_10-59-04\\277171_Mesures.txt")
-    #
-    # Mesures = ConfigParser()
-    # Mesures.read(path)
-    # print(Mesures.get('General', 'Module'))
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
