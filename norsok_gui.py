@@ -151,6 +151,7 @@ class NorksokResult(tk.Frame):
 
     def __init__(self, parent, controller):
         super().__init__(parent)
+        self.qr_code = None
         self.parent = parent
         self.controller = controller
 
@@ -251,8 +252,12 @@ class NorksokResult(tk.Frame):
             # print(ref_item)
             if item_values:
                 self.images = datamet.ImagesDatamet()
+                # On recupere les images
                 self.images.get_images(item_values)
+                # On ajoute l'annotation
                 self.images.annotation()
+                # On ajoute le nom SAP
+                self.images.rename(self.qr_code)
                 images_list = self.images.images_annot
 
                 # self.images_tree_str.delete(*self.images_tree_str.get_children())
@@ -282,7 +287,7 @@ class NorksokResult(tk.Frame):
     def on_show_frame(self, event):
         # print("on fait quelque chose!")
         #qr_code = self.controller.frames["norsok_qr"].ety_qrcode.get()
-        qr_code = self.controller.tab["norsok_qr"][0].ety_qrcode.get()
+        self.qr_code = self.controller.tab["norsok_qr"][0].ety_qrcode.get()
         # print(qr_code)
 
         # On vide toutes les treeview
@@ -297,7 +302,7 @@ class NorksokResult(tk.Frame):
         for module in module_to_find:
             # print(module)
             finded_sessions = datamet.find_session_by_qr_and_module(config=self.controller.config,
-                                                                    qrcode=qr_code,
+                                                                    qrcode=self.qr_code,
                                                                     module_name=module)
             if module == "Par seuillage":
                 if not finded_sessions:
@@ -446,9 +451,9 @@ class NorsokTransfert(tk.Frame):
             # print(frc_values)
             # On lance la mise en forme des résultats avec la class datamettosap
             self.datametToSap.set_path(frc_values)
-            frc_to_sap_values = self.datametToSap.get_all()
+            frc_to_sap_values = self.datametToSap.get_all(pictures_list=images_frc)
             # mise en forme pour les images :
-            frc_to_sap_pictures = self.datametToSap.get_images(images_frc)
+            #frc_to_sap_pictures = self.datametToSap.get_images(images_frc)
             # print(frc_to_sap_values)
             for value in frc_to_sap_values:
                 self.valeurs_frc.insert('end', str(value) + "\n")
@@ -463,13 +468,7 @@ class NorsokTransfert(tk.Frame):
             # Todo : il faut également enregistrer le XMl des images
             for image in images_frc:
                 # Dossier pour l'enregistrement des images :
-                # Todo : plus tot que les renommer ici, pourquoi ne pas le faire au moment de la création
-                picture_name = "{NoCommande}_{NoPoste}_{UM}_{SequenceLoc}_{position}.tif".format(
-                    NoCommande=qr[0],
-                    NoPoste=qr[1],
-                    UM=qr[2],
-                    SequenceLoc=qr[3],
-                    position=images_frc[image][1].replace("/", "-"))
+                picture_name = images_frc[image][2]
                 path_pictures = os.path.join(outils.suivi_folder_dict["pictures"], picture_name)
                 images_frc[image][0].save(path_pictures, compression="packbits", resolution=150)
 
@@ -484,7 +483,8 @@ class NorsokTransfert(tk.Frame):
             sap_xml.xml_result_to_sap(frc_to_sap_values, self.sap_export_path, filename)
 
             # Todo : Créer le fichier xml pour les images :
-            # Question pour Yann : est ce que je pourrais mettre les résultats et les images dans le même xml?
+            # Question pour Yann : est ce que je pourrais mettre les résultats et les images dans le même xml? => réponse oui
+            # TODO : Créer une seul fichier XML pour les résultats et les images
 
 
         # On va récupérer le chemin de l'essai STR sélectionner sur la page NorsokResult

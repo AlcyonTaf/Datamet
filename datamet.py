@@ -158,7 +158,8 @@ class ImagesDatamet(object):
     def __init__(self):
         self.path_folder = None
         self.images = {}
-        self.images_annot = {}  # chaque clef du dict contient une liste avec l'image ([0]) et l'annotation ([1])
+        self.images_annot = {}  # chaque clef du dict contient une liste avec l'image ([0]) et l'annotation ([1],
+                                # si on appele rename on trouve le nouveau nom en 3)
         self.annots = {
             # Todo voir pour mettre ceci dans un fichier de config et en même temps rajouter une ref a l'essai
             "Peau sup": "_1_1_1.tif",
@@ -218,6 +219,27 @@ class ImagesDatamet(object):
 
                 if not find:
                     self.images_annot[image_name] = [self.images[image_name], 'Image pour structure']
+
+
+    def rename(self, qr):
+        """ Pour renommer les images avec les informations SAP
+            qr : Provient du scan du qr dans NorsokQR
+        """
+        qr = qr.split(";")
+        for image_name in self.images_annot:
+            # Dossier pour l'enregistrement des images :
+            # Todo : plus tot que les renommer ici, pourquoi ne pas le faire au moment de la création
+            picture_name = "{NoCommande}_{NoPoste}_{UM}_{SequenceLoc}_{position}.tif".format(
+                NoCommande=qr[0],
+                NoPoste=qr[1],
+                UM=qr[2],
+                SequenceLoc=qr[3],
+                position=self.images_annot[image_name][1].replace("/", "-"))
+            self.images_annot[image_name].append(picture_name)
+
+
+            #path_pictures = os.path.join(outils.suivi_folder_dict["pictures"], picture_name)
+            #images_frc[image][0].save(path_pictures, compression="packbits", resolution=150)
 
     def conversion(self):
         # Todo : Ne sera surement pas utile car apparent avec pillow je peux sauver dans le bon format
@@ -328,13 +350,16 @@ class DatametToSAP(object):
             self.df_datamet_fam['Méthode Datamet'] == self.module_datamet, 'Famille SAP'].item()
         # print(fam_sap)
 
-    def get_all(self):
+    def get_all(self, pictures_list=None):
         # On récupère et on assemble les différentes parties : Essai => Eprouvette => Parametre
         # Uniquement pour les résultats
         essai = self.get_essai()
         epr = self.get_epr()
         paras = self.get_para()
 
+        if pictures_list:
+            paras_images = self.get_images(pictures_list)
+            paras = paras + paras_images
 
         epr['Parametres'] = paras
         essai['Eprouvettes'].append(epr)
@@ -525,7 +550,7 @@ class DatametToSAP(object):
         # print(all_para_lst)
         return all_para_lst
 
-    def get_images(self, pictures_name):
+    def get_images(self, pictures_list):
         """
         Fonction pour récupérer les informations qui serviront a faire le XML des images
         pictures_name contient le dict des images avec en clef, le nom, en lst[0] l'image, et en lst[1] l'annotation
@@ -539,8 +564,8 @@ class DatametToSAP(object):
                                         (self.df_SAP_fam['Envoie SAP'] == 'images')]
         lst_paras_images = list(df_SAP_images['Paramètre'].values)
         if len(lst_paras_images) == 1:
-            for picture_name in pictures_name:
-                para_lst = [lst_paras_images[0], "", "", picture_name, 1, 1]
+            for picture_name in pictures_list:
+                para_lst = [lst_paras_images[0], "", "", pictures_list[picture_name][2], 1, 1]
                 paras_lst.append((self.set_para_dict(para_lst).copy()))
         else:
             print("Erreur : Il y a plus d'un parametres pour les images")
@@ -548,16 +573,17 @@ class DatametToSAP(object):
         # print(lst_paras_images)
 
         # On assemble toutes les informations
-        essai = self.get_essai()
-        epr = self.get_epr()
-
-        epr['Parametres'] = paras_lst
-        essai['Eprouvettes'].append(epr)
-
-        essais = []
-        essais.append(essai)
-        print(essai)
-        return essais
+        # Todo : a modifier car on veut tous mettre dans le même XML donc ceci n'est plus utile
+        # essai = self.get_essai()
+        # epr = self.get_epr()
+        #
+        # epr['Parametres'] = paras_lst
+        # essai['Eprouvettes'].append(epr)
+        #
+        # essais = []
+        # essais.append(essai)
+        # print(essai)
+        return paras_lst
 
 
     def get_essai(self):
