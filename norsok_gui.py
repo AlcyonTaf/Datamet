@@ -23,7 +23,7 @@ import sapxml
 import logging
 logger = logging.getLogger(__name__)
 
-
+#TODO : Voir pour empecher d'intérargir avec les autre fenetre que celle ci est ouverte
 class NorsokGui(tk.Frame):
     def __init__(self, parent, main_app, script_path, config):
         super().__init__(parent)

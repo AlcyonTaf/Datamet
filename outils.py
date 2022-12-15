@@ -14,6 +14,10 @@ from datetime import datetime
 
 suivi_folder_dict = None
 
+# Todo : Faire une classe pour l'affichage de l'arborescence du dossier d'une session dan sune treeview :
+#  On affiche uniquement les images avec option sur clic droit : Convertir et annoté+convertir
+#  avec choix d'ou enregistrer le(s) fichier
+
 
 def current_time_sap():
     """ Pour renvoyer la date et l'heure au format sap"""
