@@ -21,6 +21,7 @@ import sapxml
 
 # Log
 import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -32,7 +33,7 @@ class ScanQrGui(tk.Frame):
         self.script_path = script_path
         self.config = config
 
-        #self.configure(width=944, height=1092)
+        # self.configure(width=944, height=1092)
 
         self.grid_rowconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=1)
@@ -47,14 +48,17 @@ class ScanQrGui(tk.Frame):
         self.nb.grid(row=1, column=0)
         # Frames
         self.tab = {"qr": [QR(parent=self.nb, controller=self), "QR"],
-                       "result": [Result(parent=self.nb, controller=self), "Resultats"],
-                       "transfert": [Transfert(parent=self.nb, controller=self), " Transfert"]}
+                    "result": [Result(parent=self.nb, controller=self), "Resultats"]
+                    # "transfert": [Transfert(parent=self.nb, controller=self), " Transfert"]
+                    }
 
         self.nb.add(self.tab["qr"][0], text=self.tab["qr"][1])
 
     def show_tab(self, tab_name):
         tab = self.tab[tab_name][0]
         name = self.tab[tab_name][1]
+        print(tab)
+        print(name)
         tab.event_generate("<<ShowFrame>>")
         self.nb.add(tab, text=name)
         self.nb.select(tab)
@@ -86,7 +90,7 @@ class QR(tk.Frame):
         self.lbl_qrcode = Label(self, text="Scanner le Code barre si dessus, puis le QR Code sur la feuille de travail")
         self.ety_qrcode = Entry(self, width=100)
 
-        self.lbl_qrcode.grid(row=1, column=0,)
+        self.lbl_qrcode.grid(row=1, column=0, )
         self.ety_qrcode.grid(row=2, column=0, sticky='n')
 
         self.btn_valider = Button(self, text="Valider", command=self.valider)
@@ -112,149 +116,26 @@ class Result(tk.Frame):
         self.images = None
 
         self.grid_rowconfigure(0, weight=1)
-        self.grid_rowconfigure(1, weight=1)
-        self.grid_rowconfigure(2, weight=1)
-        self.grid_rowconfigure(3, weight=1)
-        self.grid_rowconfigure(4, weight=1)
-        self.grid_rowconfigure(5, weight=1)
-        self.grid_rowconfigure(6, weight=1)
-        self.grid_rowconfigure(7, weight=1)
         self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=1)
 
-        # Partie FRC
-        self.lbl_frc = Label(self, text="Choix de l'essai FRC")
-        self.lbl_frc.grid(row=0, column=0)
-
-        self.lbl_frc_text = Label(self)
-        self.lbl_frc_text.grid(row=1, column=0)
-
-        self.tree_frc = Treeview(self, selectmode="browse")
-        self.tree_frc.column('#0', stretch=True, width=400)
-        self.tree_frc.heading('#0', text='Liste des sessions', anchor='center')
-        self.tree_frc.grid(row=2, column=0, sticky='nesw')
-        # Treeview event click => Pour affichage des info dans détails
-        self.tree_frc.bind("<<TreeviewSelect>>", self.on_select_tree_frc_item)
-
-        self.details_frc = mainV2.Details(self, self.parent)
-        self.details_frc.grid(row=0, column=1, rowspan=3)
-
-        # separateur
-        sep = Separator(self, orient="horizontal")
-        sep.grid(row=3, column=0, columnspan=2, sticky='ew', ipadx=200, pady=10)
-
-        # Partie STR
-        self.lbl_str = Label(self, text="Choix de l'essai STR")
-        self.lbl_str.grid(row=4, column=0)
-
-        self.lbl_str_text = Label(self)
-        self.lbl_str_text.grid(row=5, column=0)
-
-        self.tree_str = Treeview(self, selectmode="browse")
-        self.tree_str.heading('#0', text='Liste des sessions', anchor='center')
-        self.tree_str.grid(row=6, column=0, sticky='nesw')
-        self.tree_str.bind("<<TreeviewSelect>>", self.on_select_tree_str_item)
-
-        # self.images_tree_str = ttk.Treeview(self, columns=("Annotations"))
-        # self.images_tree_str.heading('#0', text='Liste des images', anchor='center')
-        # self.images_tree_str.heading('Annotations', text="Annotations", anchor='center')
-        # self.images_tree_str.grid(row=4, column=1, rowspan=3, sticky='nesw')
-        # self.images_tree_str.bind("<Double-1>", self.on_select_images_tree_str_item)
-        # Test en utilisant une class
-        self.images_tree_str = outils.ImagesList(self, self.controller)
-        self.images_tree_str.grid(row=4, column=1, rowspan=3, sticky='nesw')
+        # Todo : Modifier ArboEtImage pour juste afficher la treeview et la remplir lors du ShowFrame
+        self.tree = outils.ArboEtImages()
 
         # Event a l'affichage
         self.bind("<<ShowFrame>>", self.on_show_frame)
 
-        # Bouton pour valider et passer au transfert
-        btn_transfert = Button(self, text="Valider", command=self.valider)
-        btn_transfert.grid(row=7, column=0, columnspan=2, sticky='esnw', padx=5, pady=5)
-
-    def valider(self):
-        # On vérifie avant si une session est bien sélectionné pour chaque essais
-        if len(self.tree_str.selection()) > 0 and len(self.tree_frc.selection()) > 0:
-            # On vérifie également que l'on a bien les 6 images dans l'essai STR
-            if len(self.images.images_annot) == 6:
-                self.controller.show_tab("norsok_transfert")
-            else:
-                # Il manque des images
-                messagebox.showwarning(message="Il manque ou il y a trop d'images dans la session d'acquisition",
-                                       parent=self.controller)
-        else:
-            messagebox.showwarning(message="Vous n'avez pas sélectionné une session de chaque type d'essai",
-                                   parent=self.controller)
-
-    def on_select_tree_frc_item(self, event):
-        if len(self.tree_frc.selection()) > 0:
-            ref_item = self.tree_frc.selection()[0]
-            item_values = self.tree_frc.item(ref_item, "value")[0]
-            if item_values:
-                details_resultats = self.details_frc.text
-                details_resultats.config(state='normal')
-                details_resultats.delete('1.0', 'end')
-                try:
-                    get_resultats = datamet.Resultats()
-                    get_resultats.set_path(item_values)
-                    get_resultats.read()
-                except:
-                    pass
-                else:
-                    df_resultats = get_resultats.df_results
-                    if not df_resultats.empty:
-                        details_resultats.insert('end', '\n' + str(df_resultats.iloc[0]))
+        print('ini result')
 
     def on_show_frame(self, event):
-        # print("on fait quelque chose!")
-        #qr_code = self.controller.frames["norsok_qr"].ety_qrcode.get()
-        qr_code = self.controller.tab["norsok_qr"][0].ety_qrcode.get()
-        # print(qr_code)
+        print("on fait quelque chose!")
+        # qr_code = self.controller.frames["norsok_qr"].ety_qrcode.get()
+        qr_code = self.controller.tab["qr"][0].ety_qrcode.get()
+        print(qr_code)
 
-        # On vide toutes les treeview
-        self.tree_frc.delete(*self.tree_frc.get_children())
-        self.tree_str.delete(*self.tree_str.get_children())
-        self.images_tree_str.delete()
-        self.details_frc.text.delete('1.0', 'end')
+        finded_sessions = datamet.find_session_by_qr(config=self.controller.config,
+                                                     qrcode=qr_code, )
 
-        # Remplissage des treeview FRC et STR
-        module_to_find = ["Par seuillage", "Acquisition d'image"]
-
-        for module in module_to_find:
-            # print(module)
-            finded_sessions = datamet.find_session_by_qr_and_module(config=self.controller.config,
-                                                                    qrcode=qr_code,
-                                                                    module_name=module)
-            if module == "Par seuillage":
-                if not finded_sessions:
-                    self.lbl_frc_text.config(text="Pas de sessions trouvé pour ce QR Code")
-                else:
-                    # Todo : vérifier si un seul resultat, si c'est le cas on le selectionne automatiquement
-                    if len(finded_sessions) == 1:
-                        session_name = os.path.basename(finded_sessions[0])
-                        id_frc = self.tree_frc.insert('', 'end', text=session_name, values=(finded_sessions[0],))
-                        self.tree_frc.selection_set(id_frc)
-                        self.tree_frc.focus_set()
-                        self.tree_frc.focus(id_frc)
-                    else:
-                        for session_path in finded_sessions:
-                            session_name = os.path.basename(session_path)
-                            self.tree_frc.insert('', 'end', text=session_name, values=(session_path,))
-            elif module == "Acquisition d'image":
-                if not finded_sessions:
-                    self.lbl_str_text.config(text="Pas de sessions trouvé pour ce QR Code")
-                else:
-                    if len(finded_sessions) == 1:
-                        session_name = os.path.basename(finded_sessions[0])
-                        id_str = self.tree_str.insert('', 'end', text=session_name, values=(finded_sessions[0],))
-                        self.tree_str.selection_set(id_str)
-                        self.tree_str.focus_set()
-                        self.tree_str.focus(id_str)
-                    else:
-                        for session_path in finded_sessions:
-                            session_name = os.path.basename(session_path)
-                            self.tree_str.insert('', 'end', text=session_name, values=(session_path,))
-
-
+        print(finded_sessions)
 
 class Transfert(tk.Frame):
 
@@ -305,7 +186,6 @@ class Transfert(tk.Frame):
         # Event a l'affichage
         self.bind("<<ShowFrame>>", self.on_show_frame)
 
-
     def on_show_frame(self, event):
         # On vide lex Text et Tree
         self.tree_str_images.delete()
@@ -337,7 +217,6 @@ class Transfert(tk.Frame):
         self.tree_frc_images.insert(images_frc)
         self.tree_str_images.insert(images_str)
 
-
         # On va récupérer le chemin de l'essai FRC sélectionner sur la page NorsokResult
         frc_tree_selected = self.controller.tab['norksok_result'][0].tree_frc.selection()
         if len(frc_tree_selected) > 0:
@@ -363,7 +242,6 @@ class Transfert(tk.Frame):
                 Timestamp=outils.current_time_sap())
 
             sap_xml.xml_result_to_sap(frc_to_sap_values, self.sap_export_path, filename)
-
 
         # On va récupérer le chemin de l'essai STR sélectionner sur la page NorsokResult
         str_tree_selected = self.controller.tab['norksok_result'][0].tree_str.selection()
@@ -391,9 +269,6 @@ class Transfert(tk.Frame):
 
             sap_xml.xml_result_to_sap(str_to_sap_values, self.sap_export_path, filename)
 
-
-
         # if len(self.tree_frc.selection()) > 0:
         #     ref_item = self.tree_frc.selection()[0]
         #     item_values = self.tree_frc.item(ref_item, "value")[0]
-

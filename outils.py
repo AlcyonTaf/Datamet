@@ -121,3 +121,71 @@ class ShowImage(tk.Toplevel):
         lbl = Label(self, image=image)
         lbl.image = image
         lbl.grid(row=0, column=0)
+
+
+class ArboEtImages(tk.Frame):
+    """
+    Class pour afficher une treeview de l'arboresence d'un dossier de session et les images tiff qu'il contient
+    Double clic sur l'image => ouverture pour visualisation => class ShowImage
+    Clic droit :
+        Convertir => Propose ou enregistré l'image
+        Annoter et Convertir => Propose ou enregistré l'image
+    """
+    def __init__(self, parent, controller=None, folder_session=None):
+        super().__init__(parent)
+        self.parent = parent
+        self.controller = controller
+
+        self.folder_session = folder_session
+        self.nodes = {}
+
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+
+        self.tree = ttk.Treeview(self)
+        ysb = ttk.Scrollbar(self, orient='vertical', command=self.tree.yview)
+        xsb = ttk.Scrollbar(self, orient='horizontal', command=self.tree.xview)
+        self.tree.configure(yscroll=ysb.set, xscroll=xsb.set)
+        # self.tree.column('folder_list', stretch=True, width=300)
+        self.tree.heading('#0', text='Contenu du dossier', anchor='w')
+
+        self.tree.grid(row=0, column=0, sticky="nsew")
+        ysb.grid(row=0, column=1, sticky='ns')
+        xsb.grid(row=1, column=0, sticky='ew')
+
+        self.tree.bind("<<TreeviewOpen>>", self.open_node)
+        self.populate_node("", self.folder_session)
+
+
+    def populate_node(self, parent, abspath):
+        for entry in os.listdir(abspath):
+            entry_path = os.path.join(abspath, entry)
+            if os.path.isfile(entry_path) and entry.endswith('.tif'):
+                self.tree.insert(parent, tk.END, text=entry, open=False)
+            if os.path.isdir(entry_path):
+                node = self.tree.insert(parent, tk.END, text=entry, open=False)
+                self.nodes[node] = entry_path
+                self.tree.insert(node, tk.END)
+
+    def open_node(self, event):
+        item = self.tree.focus()
+        abspath = self.nodes.pop(item, False)
+        if abspath:
+            children = self.tree.get_children(item)
+            self.tree.delete(children)
+            self.populate_node(item, abspath)
+
+
+if __name__ == '__main__':
+
+    print("outils.py")
+
+    root = tk.Tk()
+    path = r"C:\Nobackup\Dev Informatique\GitHub Clone\Datamet\Exemple résultat\CAMUS_C\AcquisitionImages_ESSAI STR-NORSOK_2022-10-21_10-05-22"
+
+    test = ArboEtImages(root, folder_session=path)
+    test.pack()
+
+    root.mainloop()
